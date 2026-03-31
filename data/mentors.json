@@ -1,0 +1,32 @@
+{
+  "mentors": [
+    {
+      "id": 1,
+      "name": "Sheikh Ahmad Hassan",
+      "bio": "Experienced Arabic teacher with 15+ years of teaching Quranic Arabic, Tajweed, and classical Arabic grammar. Holds Ijazah in Hafs recitation.",
+      "topics": ["Arabic", "Tajweed", "Quran"],
+      "avatar": "👳"
+    },
+    {
+      "id": 2,
+      "name": "Ustadha Fatima Rahman",
+      "bio": "Islamic studies scholar specializing in Fiqh, Islamic history, and women's issues in Islam. Passionate about making Islamic knowledge accessible.",
+      "topics": ["Fiqh", "Islamic History", "Women in Islam"],
+      "avatar": "🧕"
+    },
+    {
+      "id": 3,
+      "name": "Imam Yusuf Abdullah",
+      "bio": "Community imam and counselor with expertise in Islamic ethics, spiritual development, and mentoring youth. Known for compassionate guidance.",
+      "topics": ["Aqeedah", "Spirituality", "Youth Mentorship"],
+      "avatar": "🧔"
+    },
+    {
+      "id": 4,
+      "name": "Dr. Amina Khalil",
+      "bio": "PhD in Islamic Studies with focus on comparative religion. Teaches Tafsir, Seerah, and contemporary Islamic thought. Published author and lecturer.",
+      "topics": ["Tafsir", "Seerah", "Comparative Religion"],
+      "avatar": "👩‍🎓"
+    }
+  ]
+}

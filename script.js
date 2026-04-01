@@ -4,6 +4,10 @@
  * Single Page Application (SPA)
  * ============================================
  */
+const SUPABASE_URL = "https://ehynuqzwxwwuqbmjyymr.supabase.co";
+const SUPABASE_KEY = "<provided anon key>";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let selectedMentor = null;
 
 // ============================================
 // MENTOR DATA
@@ -45,9 +49,7 @@ const mentorsData = [
 // Simple variables to track app state
 // ============================================
 const state = {
-    currentView: 'home',    // 'home' or 'profile'
-    selectedMentor: null,   // Currently viewed mentor object
-    bookingSubmitted: false // Track if booking form was submitted
+    currentView: 'home'    // 'home' or 'profile'
 };
 
 // ============================================
@@ -67,8 +69,7 @@ const app = {
      */
     goHome() {
         state.currentView = 'home';
-        state.selectedMentor = null;
-        state.bookingSubmitted = false;
+        selectedMentor = null;
         this.renderHome();
     },
 
@@ -80,8 +81,7 @@ const app = {
         const mentor = mentorsData.find(m => m.id === mentorId);
         if (mentor) {
             state.currentView = 'profile';
-            state.selectedMentor = mentor;
-            state.bookingSubmitted = false;
+            selectedMentor = mentor;
             this.renderProfile(mentor);
         }
     },
@@ -95,39 +95,6 @@ const app = {
             bookingSection.style.display = 'block';
             bookingSection.scrollIntoView({ behavior: 'smooth' });
         }
-    },
-
-    /**
-     * Handle booking form submission
-     * @param {Event} event - Form submit event
-     */
-    handleBookingSubmit(event) {
-        event.preventDefault();
-        
-        // Get form data
-        const formData = {
-            mentorId: state.selectedMentor.id,
-            mentorName: state.selectedMentor.name,
-            studentName: document.getElementById('student-name').value,
-            learningTopic: document.getElementById('learning-topic').value,
-            preferredTime: document.getElementById('preferred-time').value,
-            submittedAt: new Date().toISOString()
-        };
-
-        // Store in localStorage
-        const bookings = JSON.parse(localStorage.getItem('sohbah_bookings') || '[]');
-        bookings.push(formData);
-        localStorage.setItem('sohbah_bookings', JSON.stringify(bookings));
-
-        // Also log to console
-        console.log('New Booking Request:', formData);
-
-        // Show success message
-        state.bookingSubmitted = true;
-        this.renderSuccessMessage();
-
-        // Clear form
-        document.getElementById('booking-form').reset();
     },
 
     // ============================================
@@ -235,12 +202,12 @@ const app = {
                     <!-- Booking Form Section (Hidden by default) -->
                     <div id="booking-section" class="booking-section" style="display: none;">
                         <h3>Request a Session</h3>
-                        <form id="booking-form" onsubmit="app.handleBookingSubmit(event)">
+                        <form id="booking-form" onsubmit="handleBookingSubmit(event)">
                             <div class="form-group">
-                                <label class="form-label" for="student-name">Your Name</label>
+                                <label class="form-label" for="name">Your Name</label>
                                 <input 
                                     type="text" 
-                                    id="student-name" 
+                                    id="name" 
                                     class="form-input" 
                                     placeholder="Enter your full name"
                                     required
@@ -248,9 +215,9 @@ const app = {
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="learning-topic">What do you want to learn?</label>
+                                <label class="form-label" for="topic">What do you want to learn?</label>
                                 <textarea 
-                                    id="learning-topic" 
+                                    id="topic" 
                                     class="form-textarea" 
                                     placeholder="Describe what you'd like to learn or discuss..."
                                     required
@@ -258,10 +225,10 @@ const app = {
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label" for="preferred-time">Preferred Time</label>
+                                <label class="form-label" for="time">Preferred Time</label>
                                 <input 
                                     type="text" 
-                                    id="preferred-time" 
+                                    id="time" 
                                     class="form-input" 
                                     placeholder="e.g., Weekdays after 5 PM, Saturday mornings"
                                     required
@@ -274,31 +241,12 @@ const app = {
                             </button>
                         </form>
 
-                        <!-- Success Message Container -->
-                        <div id="success-message-container"></div>
                     </div>
                 </article>
             </div>
         `;
 
         appContainer.innerHTML = html;
-    },
-
-    /**
-     * Render success message after form submission
-     */
-    renderSuccessMessage() {
-        const container = document.getElementById('success-message-container');
-        if (container) {
-            container.innerHTML = `
-                <div class="success-message">
-                    <span class="success-icon">✓</span>
-                    <span class="success-text">
-                        Your request has been sent. The mentor will reach out soon.
-                    </span>
-                </div>
-            `;
-        }
     },
 
     /**
@@ -312,6 +260,31 @@ const app = {
         return bio.substring(0, maxLength).trim() + '...';
     }
 };
+
+async function handleBookingSubmit(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("name").value;
+    const topic = document.getElementById("topic").value;
+    const preferredTime = document.getElementById("time").value;
+
+    const bookingData = {
+        name,
+        topic,
+        preferred_time: preferredTime,
+        mentor_id: selectedMentor ? selectedMentor.id : null
+    };
+
+    const { error } = await supabase.from("bookings").insert([bookingData]);
+
+    if (error) {
+        alert("There was an error submitting your booking request. Please try again.");
+        return;
+    }
+
+    alert("Your request has been sent. The mentor will reach out soon.");
+    document.getElementById("booking-form").reset();
+}
 
 // ============================================
 // INITIALIZE APP WHEN DOM IS READY

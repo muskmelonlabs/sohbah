@@ -79,7 +79,7 @@ const app = {
     showBookingForm() {
         const section = document.getElementById('booking-section');
         if (section) {
-            section.style.display = 'block';
+            section.hidden = false;
             section.scrollIntoView({ behavior: 'smooth' });
         }
     },
@@ -115,21 +115,27 @@ const app = {
 
             <button onclick="app.showBookingForm()">Book Session</button>
 
-            <div id="booking-section" style="display:none;">
-                <form id="booking-form" onsubmit="handleBookingSubmit(event)">
-                    
-                    <input id="name" placeholder="Your Name" required />
-                    
-                    <textarea id="topic" placeholder="What do you want to learn?" required></textarea>
-                    
-                    <input id="time" placeholder="Preferred time" required />
+            <div id="booking-section" hidden>
+                <form id="booking-form" class="booking-form" onsubmit="handleBookingSubmit(event)">
+    
+                    <div class="form-group">
+                        <input id="name" class="form-input" placeholder="Your Name" required />
+                    </div>
+    
+                    <div class="form-group">
+                        <textarea id="topic" class="form-textarea" placeholder="What do you want to learn?" required></textarea>
+                    </div>
+    
+                    <div class="form-group">
+                        <input id="time" class="form-input" placeholder="Preferred time" required />
+                    </div>
 
-                    <button id="submit-btn">Submit</button>
+                    <button id="submit-btn" class="primary-btn">Submit Request</button>
                 </form>
 
-                <p id="error" style="color:red; display:none;"></p>
+                <p id="error" hidden></p>
 
-                <div id="success" style="display:none;">
+                <div id="success" hidden>
                     <p>Request sent successfully</p>
                     <button onclick="app.goHome()">Back to Home</button>
                 </div>
@@ -162,15 +168,15 @@ async function handleBookingSubmit(e) {
     const { error: err } = await supabase.from("bookings").insert([data]);
 
     if (err) {
-        error.style.display = "block";
+        error.hidden = false;
         error.textContent = "Something went wrong";
         btn.disabled = false;
-        btn.textContent = "Submit";
+        btn.textContent = "Submit Request";
         return;
     }
 
-    form.style.display = "none";
-    success.style.display = "block";
+    form.hidden = true;
+    success.hidden = false;
 }
 
 // ============================================

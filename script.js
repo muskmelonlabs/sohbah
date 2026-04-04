@@ -87,17 +87,20 @@ const app = {
     renderHome() {
         document.getElementById('app').innerHTML = `
             <section class="hero">
-                <h1>Learn from Islamic Mentors</h1>
-                <p>Connect with teachers for Arabic, Quran, Fiqh and more.</p>
+                <h1 class="hero-title">Learn from Islamic Mentors</h1>
+                <p class="hero-subtitle">Connect with teachers for Arabic, Quran, Fiqh and more.</p>
             </section>
 
             <div class="mentors-grid">
                 ${mentorsData.map(m => `
                     <div class="mentor-card">
-                        <div>${m.avatar}</div>
-                        <h3>${m.name}</h3>
-                        <p>${m.bio}</p>
-                        <button onclick="app.viewProfile(${m.id})">
+                        <div class="mentor-avatar">${m.avatar}</div>
+                        <h3 class="mentor-name">${m.name}</h3>
+                        <p class="mentor-bio">${m.bio}</p>
+                        <div class="mentor-topics">
+                            ${m.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
+                        </div>
+                        <button class="btn btn-primary" onclick="app.viewProfile(${m.id})">
                             View Profile
                         </button>
                     </div>
@@ -108,36 +111,68 @@ const app = {
 
     renderProfile(mentor) {
         document.getElementById('app').innerHTML = `
-            <button onclick="app.goHome()">← Back</button>
+            <div class="profile-container">
 
-            <h2>${mentor.name}</h2>
-            <p>${mentor.bio}</p>
+                <button class="back-btn" onclick="app.goHome()">← Back to Mentors</button>
 
-            <button onclick="app.showBookingForm()">Book Session</button>
+                <div class="profile-card">
 
-            <div id="booking-section" hidden>
-                <form id="booking-form" class="booking-form" onsubmit="handleBookingSubmit(event)">
-    
-                    <div class="form-group">
-                        <input id="name" class="form-input" placeholder="Your Name" required />
-                    </div>
-    
-                    <div class="form-group">
-                        <textarea id="topic" class="form-textarea" placeholder="What do you want to learn?" required></textarea>
-                    </div>
-    
-                    <div class="form-group">
-                        <input id="time" class="form-input" placeholder="Preferred time" required />
+                    <div class="profile-header">
+                        <div class="profile-avatar">${mentor.avatar}</div>
+                        <div class="profile-info">
+                            <h2>${mentor.name}</h2>
+                            <div class="profile-topics">
+                                ${mentor.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
+                            </div>
+                        </div>
                     </div>
 
-                    <button id="submit-btn" class="primary-btn">Submit Request</button>
-                </form>
+                    <div class="profile-section">
+                        <h3>About</h3>
+                        <p>${mentor.bio}</p>
+                    </div>
 
-                <p id="error" hidden></p>
+                    <div class="profile-actions">
+                        <button class="btn btn-outline btn-large" onclick="app.showBookingForm()">Book a Session</button>
+                    </div>
 
-                <div id="success" hidden>
-                    <p>Request sent successfully</p>
-                    <button onclick="app.goHome()">Back to Home</button>
+                    <div id="booking-section" hidden>
+                        <div class="booking-section">
+                            <h3>Request a Session</h3>
+
+                            <form id="booking-form" onsubmit="handleBookingSubmit(event)">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Your Name</label>
+                                    <input id="name" class="form-input" type="text" placeholder="Enter your full name" required />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="topic">What do you want to learn?</label>
+                                    <textarea id="topic" class="form-textarea" placeholder="Describe the topic or questions you'd like to explore..." required></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="time">Preferred Time</label>
+                                    <input id="time" class="form-input" type="text" placeholder="e.g. Weekday evenings, Saturday mornings" required />
+                                    <span class="form-hint">Let the mentor know your general availability.</span>
+                                </div>
+
+                                <button id="submit-btn" class="btn btn-primary btn-large" type="submit">Submit Request</button>
+
+                            </form>
+
+                            <div id="error" class="booking-feedback booking-feedback-error" hidden></div>
+
+                            <div id="success" class="booking-feedback booking-feedback-success" hidden>
+                                <p class="booking-feedback-title">Request Sent!</p>
+                                <p class="booking-feedback-text">Your session request has been submitted. The mentor will be in touch with you soon.</p>
+                                <button class="btn btn-outline" onclick="app.goHome()">Back to Home</button>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
             </div>
         `;
@@ -157,6 +192,7 @@ async function handleBookingSubmit(e) {
 
     btn.disabled = true;
     btn.textContent = "Sending...";
+    error.hidden = true;
 
     const data = {
         name: document.getElementById('name').value,
@@ -169,7 +205,7 @@ async function handleBookingSubmit(e) {
 
     if (err) {
         error.hidden = false;
-        error.textContent = "Something went wrong";
+        error.textContent = "Something went wrong. Please try again.";
         btn.disabled = false;
         btn.textContent = "Submit Request";
         return;

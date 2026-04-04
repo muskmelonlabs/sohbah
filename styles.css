@@ -248,6 +248,229 @@ body {
 }
 
 /* ============================================
+   DISCOVERY SYSTEM
+   ============================================ */
+
+.discovery-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 24px 48px;
+}
+
+.discovery-controls {
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Search Bar */
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    font-size: 18px;
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 14px 48px;
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    font-size: 16px;
+    font-family: inherit;
+    background-color: var(--bg-white);
+    transition: all 0.2s ease;
+    color: var(--text-dark);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 4px var(--primary-green-light);
+}
+
+.search-input::placeholder {
+    color: var(--text-light);
+}
+
+.search-clear {
+    position: absolute;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.search-clear:hover {
+    color: var(--text-dark);
+    background-color: var(--bg-light);
+}
+
+/* Filter Pills */
+.filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-pill {
+    padding: 8px 20px;
+    border-radius: 24px;
+    border: 2px solid var(--border-light);
+    background-color: var(--bg-white);
+    color: var(--text-medium);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.filter-pill:hover {
+    border-color: var(--primary-green);
+    color: var(--primary-green);
+    background-color: var(--primary-green-light);
+}
+
+.filter-pill-active {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+    color: white;
+}
+
+.filter-pill-active:hover {
+    background-color: var(--primary-green-dark);
+    border-color: var(--primary-green-dark);
+    color: white;
+}
+
+/* Discovery Sections */
+.discovery-section {
+    margin-bottom: 56px;
+}
+
+.discovery-section-header {
+    margin-bottom: 24px;
+}
+
+.discovery-section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 6px;
+}
+
+.discovery-section-sub {
+    font-size: 15px;
+    color: var(--text-medium);
+    margin: 0;
+}
+
+/* Results count */
+.results-count {
+    font-size: 15px;
+    color: var(--text-medium);
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+/* Enhanced Mentor Card */
+.mentor-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.mentor-card-top .mentor-avatar {
+    margin-bottom: 0;
+}
+
+.mentor-avail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background-color: var(--primary-green-light);
+    color: var(--primary-green-dark);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.mentor-avail-dot {
+    width: 7px;
+    height: 7px;
+    background-color: var(--primary-green);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse-dot 2s infinite;
+}
+
+.mentor-title-small {
+    font-size: 13px;
+    color: var(--primary-green);
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.mentor-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.mentor-stat {
+    font-size: 13px;
+    color: var(--text-medium);
+    font-weight: 500;
+}
+
+.mentor-stat-divider {
+    color: var(--border-light);
+    font-weight: 700;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 64px 24px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.empty-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.empty-text {
+    font-size: 15px;
+    color: var(--text-medium);
+    margin-bottom: 24px;
+}
+
+/* ============================================
    PROFILE VIEW
    ============================================ */
 .profile-container {
@@ -731,6 +954,19 @@ body {
 
     .mentors-grid {
         grid-template-columns: 1fr;
+    }
+
+    .filter-pills {
+        gap: 8px;
+    }
+
+    .filter-pill {
+        padding: 7px 14px;
+        font-size: 13px;
+    }
+
+    .discovery-section-title {
+        font-size: 20px;
     }
 
     .profile-header {

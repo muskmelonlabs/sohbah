@@ -28,6 +28,7 @@ const mentorsData = [
         sessionsCompleted: 240,
         studentsHelped: 150,
         yearsExperience: 15,
+        beginner: true,
         achievements: [
             "Improve Quran recitation with proper Tajweed",
             "Master Arabic letters and pronunciation",
@@ -76,6 +77,7 @@ const mentorsData = [
         sessionsCompleted: 310,
         studentsHelped: 200,
         yearsExperience: 18,
+        beginner: true,
         achievements: [
             "Strengthen your connection to Islam",
             "Build a consistent daily worship routine",
@@ -117,7 +119,9 @@ const mentorsData = [
 // STATE
 // ============================================
 const state = {
-    currentView: 'home'
+    currentView: 'home',
+    activeFilter: 'all',
+    searchQuery: ''
 };
 
 // ============================================
@@ -131,6 +135,8 @@ const app = {
 
     goHome() {
         state.currentView = 'home';
+        state.activeFilter = 'all';
+        state.searchQuery = '';
         selectedMentor = null;
         this.renderHome();
     },
@@ -152,27 +158,170 @@ const app = {
         }
     },
 
+    setFilter(category) {
+        state.activeFilter = category;
+        this.renderHome();
+    },
+
+    handleSearch(value) {
+        state.searchQuery = value;
+        this.renderHome();
+        const input = document.getElementById('mentor-search');
+        if (input) {
+            input.focus();
+            input.setSelectionRange(value.length, value.length);
+        }
+    },
+
+    clearSearch() {
+        state.searchQuery = '';
+        state.activeFilter = 'all';
+        this.renderHome();
+    },
+
+    renderMentorCard(mentor) {
+        return `
+            <div class="mentor-card">
+                <div class="mentor-card-top">
+                    <div class="mentor-avatar">${mentor.avatar}</div>
+                    <span class="mentor-avail-badge">
+                        <span class="mentor-avail-dot"></span> Available
+                    </span>
+                </div>
+                <h3 class="mentor-name">${mentor.name}</h3>
+                <p class="mentor-title-small">${mentor.title}</p>
+                <div class="mentor-card-stats">
+                    <span class="mentor-stat">📚 ${mentor.sessionsCompleted} sessions</span>
+                    <span class="mentor-stat-divider">·</span>
+                    <span class="mentor-stat">⭐ ${mentor.yearsExperience}+ yrs</span>
+                </div>
+                <div class="mentor-topics">
+                    ${mentor.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
+                </div>
+                <button class="btn btn-primary" onclick="app.viewProfile(${mentor.id})">
+                    View Profile
+                </button>
+            </div>
+        `;
+    },
+
     renderHome() {
+        const activeFilter = state.activeFilter;
+        const searchQuery = state.searchQuery;
+
+        const filters = [
+            { id: 'all', label: 'All Mentors' },
+            { id: 'Arabic', label: 'Arabic' },
+            { id: 'Quran', label: 'Quran' },
+            { id: 'Tajweed', label: 'Tajweed' },
+            { id: 'Fiqh', label: 'Fiqh' },
+            { id: 'women', label: 'Women-only' }
+        ];
+
+        const filtered = mentorsData.filter(m => {
+            const q = searchQuery.toLowerCase();
+            const matchesSearch = !q ||
+                m.name.toLowerCase().includes(q) ||
+                m.title.toLowerCase().includes(q) ||
+                m.topics.some(t => t.toLowerCase().includes(q));
+
+            let matchesFilter = true;
+            if (activeFilter !== 'all') {
+                if (activeFilter === 'women') {
+                    matchesFilter = m.topics.includes('Women in Islam');
+                } else {
+                    matchesFilter = m.topics.some(t => t.toLowerCase() === activeFilter.toLowerCase());
+                }
+            }
+
+            return matchesSearch && matchesFilter;
+        });
+
+        const isFiltered = activeFilter !== 'all' || searchQuery.trim() !== '';
+
+        const topMentors = [...mentorsData].sort((a, b) => b.sessionsCompleted - a.sessionsCompleted).slice(0, 2);
+        const beginnerMentors = mentorsData.filter(m => m.beginner);
+        const arabicMentors = mentorsData.filter(m => m.topics.includes('Arabic'));
+
         document.getElementById('app').innerHTML = `
             <section class="hero">
-                <h1 class="hero-title">Learn from Islamic Mentors</h1>
-                <p class="hero-subtitle">Connect with teachers for Arabic, Quran, Fiqh and more.</p>
+                <h1 class="hero-title">Find Your Islamic Mentor</h1>
+                <p class="hero-subtitle">Connect with expert teachers for Arabic, Quran, Fiqh and more.</p>
             </section>
 
-            <div class="mentors-grid">
-                ${mentorsData.map(m => `
-                    <div class="mentor-card">
-                        <div class="mentor-avatar">${m.avatar}</div>
-                        <h3 class="mentor-name">${m.name}</h3>
-                        <p class="mentor-bio">${m.bio}</p>
-                        <div class="mentor-topics">
-                            ${m.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
-                        </div>
-                        <button class="btn btn-primary" onclick="app.viewProfile(${m.id})">
-                            View Profile
-                        </button>
+            <div class="discovery-container">
+
+                <div class="discovery-controls">
+                    <div class="search-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input
+                            id="mentor-search"
+                            class="search-input"
+                            type="text"
+                            placeholder="Search by name or topic..."
+                            value="${searchQuery}"
+                            oninput="app.handleSearch(this.value)"
+                        />
+                        ${searchQuery ? `<button class="search-clear" onclick="app.clearSearch()">✕</button>` : ''}
                     </div>
-                `).join('')}
+                    <div class="filter-pills">
+                        ${filters.map(f => `
+                            <button
+                                class="filter-pill ${activeFilter === f.id ? 'filter-pill-active' : ''}"
+                                onclick="app.setFilter('${f.id}')"
+                            >${f.label}</button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                ${isFiltered ? `
+                    <div class="discovery-section">
+                        ${filtered.length === 0 ? `
+                            <div class="empty-state">
+                                <p class="empty-icon">🔍</p>
+                                <p class="empty-title">No mentors found</p>
+                                <p class="empty-text">Try a different search term or filter.</p>
+                                <button class="btn btn-outline" onclick="app.clearSearch()">Clear Search</button>
+                            </div>
+                        ` : `
+                            <p class="results-count">${filtered.length} mentor${filtered.length !== 1 ? 's' : ''} found</p>
+                            <div class="mentors-grid">
+                                ${filtered.map(m => this.renderMentorCard(m)).join('')}
+                            </div>
+                        `}
+                    </div>
+                ` : `
+                    <div class="discovery-section">
+                        <div class="discovery-section-header">
+                            <h2 class="discovery-section-title">⭐ Top Mentors</h2>
+                            <p class="discovery-section-sub">Most experienced and active on the platform</p>
+                        </div>
+                        <div class="mentors-grid">
+                            ${topMentors.map(m => this.renderMentorCard(m)).join('')}
+                        </div>
+                    </div>
+
+                    <div class="discovery-section">
+                        <div class="discovery-section-header">
+                            <h2 class="discovery-section-title">🌱 For Beginners</h2>
+                            <p class="discovery-section-sub">Welcoming mentors for those just starting their journey</p>
+                        </div>
+                        <div class="mentors-grid">
+                            ${beginnerMentors.map(m => this.renderMentorCard(m)).join('')}
+                        </div>
+                    </div>
+
+                    <div class="discovery-section">
+                        <div class="discovery-section-header">
+                            <h2 class="discovery-section-title">🔤 Arabic Specialists</h2>
+                            <p class="discovery-section-sub">Expert teachers in Arabic language and Quranic sciences</p>
+                        </div>
+                        <div class="mentors-grid">
+                            ${arabicMentors.map(m => this.renderMentorCard(m)).join('')}
+                        </div>
+                    </div>
+                `}
+
             </div>
         `;
     },

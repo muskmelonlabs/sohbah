@@ -241,6 +241,12 @@ body {
     transform: translateY(-1px);
 }
 
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    transform: none;
+}
+
 /* ============================================
    PROFILE VIEW
    ============================================ */
@@ -407,27 +413,34 @@ body {
     margin-top: 6px;
 }
 
-/* Success Message */
-.success-message {
-    background-color: var(--primary-green-light);
-    border: 1px solid var(--primary-green);
+.booking-feedback {
     border-radius: var(--radius-md);
     padding: 20px 24px;
     margin-top: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
 }
 
-.success-icon {
-    font-size: 24px;
-    color: var(--primary-green);
+.booking-feedback-error {
+    background-color: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
 }
 
-.success-text {
+.booking-feedback-success {
+    background-color: var(--primary-green-light);
+    border: 1px solid var(--primary-green);
+}
+
+.booking-feedback-title {
     font-size: 16px;
     color: var(--primary-green-dark);
-    font-weight: 500;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.booking-feedback-text {
+    font-size: 15px;
+    color: var(--text-medium);
+    margin-bottom: 16px;
 }
 
 /* ============================================

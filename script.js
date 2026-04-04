@@ -10,6 +10,7 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let selectedMentor = null;
+let currentUser = null;
 
 // ============================================
 // DATA
@@ -829,7 +830,16 @@ const state = {
 // ============================================
 const app = {
 
-    init() {
+    async init() {
+        const { data: { session } } = await supabase.auth.getSession();
+        currentUser = session?.user || null;
+        this.updateNav();
+
+        supabase.auth.onAuthStateChange((_event, session) => {
+            currentUser = session?.user || null;
+            this.updateNav();
+        });
+
         if (state.onboardingDone) {
             this.renderHome();
         } else {
@@ -1276,7 +1286,268 @@ const app = {
 
             </div>
         `;
-    }
+    },
+
+    // ==========================================
+    // AUTH & DASHBOARD
+    // ==========================================
+    updateNav() {
+        const navAuth = document.getElementById('nav-auth');
+        if (!navAuth) return;
+        if (currentUser) {
+            const name = currentUser.user_metadata?.name || currentUser.email;
+            navAuth.innerHTML = `
+                <span class="nav-user-name">👤 ${name}</span>
+                <a href="#" class="nav-link nav-link-highlight" onclick="app.renderDashboard(); return false;">Dashboard</a>
+                <a href="#" class="nav-link" onclick="app.handleLogout(); return false;">Logout</a>
+            `;
+        } else {
+            navAuth.innerHTML = `
+                <a href="#" class="nav-link nav-link-highlight" onclick="app.renderAuthPage('login'); return false;">Mentor Login</a>
+            `;
+        }
+    },
+
+    renderAuthPage(view = 'login') {
+        state.currentView = 'auth';
+        const isLogin = view === 'login';
+        const mentorOptions = mentorsData.map(m =>
+            `<option value="${m.id}">${m.name} — ${m.title}</option>`
+        ).join('');
+
+        document.getElementById('app').innerHTML = `
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-logo">🌙</div>
+                    <h1 class="auth-title">${isLogin ? 'Mentor Login' : 'Create Mentor Account'}</h1>
+                    <p class="auth-sub">${isLogin ? 'Access your dashboard and manage bookings.' : 'Register to start receiving session requests.'}</p>
+
+                    <div class="auth-toggle">
+                        <button class="auth-tab ${isLogin ? 'auth-tab-active' : ''}" onclick="app.renderAuthPage('login')">Login</button>
+                        <button class="auth-tab ${!isLogin ? 'auth-tab-active' : ''}" onclick="app.renderAuthPage('signup')">Sign Up</button>
+                    </div>
+
+                    <form id="auth-form" onsubmit="${isLogin ? 'app.handleLogin(event)' : 'app.handleSignup(event)'}">
+
+                        ${!isLogin ? `
+                        <div class="form-group">
+                            <label class="form-label" for="auth-mentor-id">Your Mentor Profile</label>
+                            <select id="auth-mentor-id" class="form-input" required>
+                                <option value="">— Select your name —</option>
+                                ${mentorOptions}
+                            </select>
+                            <span class="form-hint">Select the mentor profile that matches you on the platform.</span>
+                        </div>
+                        ` : ''}
+
+                        <div class="form-group">
+                            <label class="form-label" for="auth-email">Email</label>
+                            <input id="auth-email" class="form-input" type="email" placeholder="you@example.com" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="auth-password">Password</label>
+                            <input id="auth-password" class="form-input" type="password" placeholder="Minimum 6 characters" required minlength="6" />
+                        </div>
+
+                        <div id="auth-error" class="auth-error" hidden></div>
+
+                        <button id="auth-btn" class="btn btn-primary btn-large" type="submit">
+                            ${isLogin ? 'Login to Dashboard' : 'Create Account'}
+                        </button>
+                    </form>
+
+                    <button class="auth-back-link" onclick="app.goHome()">← Back to mentors</button>
+                </div>
+            </div>
+        `;
+    },
+
+    async handleLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('auth-btn');
+        const errorEl = document.getElementById('auth-error');
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+        errorEl.hidden = true;
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+            errorEl.textContent = error.message;
+            errorEl.hidden = false;
+            btn.disabled = false;
+            btn.textContent = 'Login to Dashboard';
+            return;
+        }
+
+        this.renderDashboard();
+    },
+
+    async handleSignup(e) {
+        e.preventDefault();
+        const btn = document.getElementById('auth-btn');
+        const errorEl = document.getElementById('auth-error');
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        const mentorIdSelect = document.getElementById('auth-mentor-id');
+        const mentorId = parseInt(mentorIdSelect.value);
+        const mentorName = mentorIdSelect.options[mentorIdSelect.selectedIndex].text.split(' — ')[0];
+
+        if (!mentorId) {
+            errorEl.textContent = 'Please select your mentor profile.';
+            errorEl.hidden = false;
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Creating account...';
+        errorEl.hidden = true;
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { mentor_id: mentorId, name: mentorName }
+            }
+        });
+
+        if (error) {
+            errorEl.textContent = error.message;
+            errorEl.hidden = false;
+            btn.disabled = false;
+            btn.textContent = 'Create Account';
+            return;
+        }
+
+        const user = data.user;
+        if (user) {
+            await supabase.from('mentors').upsert({
+                name: mentorName,
+                email,
+                auth_user_id: user.id,
+                experience: mentorsData.find(m => m.id === mentorId)?.yearsExperience || null,
+                topics: mentorsData.find(m => m.id === mentorId)?.topics || [],
+                bio: mentorsData.find(m => m.id === mentorId)?.bio || ''
+            });
+        }
+
+        this.renderDashboard();
+    },
+
+    async handleLogout() {
+        await supabase.auth.signOut();
+        this.goHome();
+    },
+
+    async renderDashboard() {
+        if (!currentUser) {
+            this.renderAuthPage('login');
+            return;
+        }
+
+        state.currentView = 'dashboard';
+        const mentorId = currentUser.user_metadata?.mentor_id;
+        const mentorName = currentUser.user_metadata?.name || currentUser.email;
+        const mentorProfile = mentorsData.find(m => m.id === mentorId);
+
+        document.getElementById('app').innerHTML = `
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div>
+                        <h1 class="dashboard-title">Your Dashboard</h1>
+                        <p class="dashboard-sub">Welcome back, <strong>${mentorName}</strong></p>
+                    </div>
+                    ${mentorProfile ? `
+                    <button class="btn btn-outline" onclick="app.viewProfile(${mentorProfile.id})">View My Profile</button>
+                    ` : ''}
+                </div>
+
+                ${mentorProfile ? `
+                <div class="dashboard-mentor-card">
+                    <span class="dashboard-mentor-avatar">${mentorProfile.avatar}</span>
+                    <div>
+                        <p class="dashboard-mentor-name">${mentorProfile.name}</p>
+                        <p class="dashboard-mentor-title">${mentorProfile.title}</p>
+                        <p class="dashboard-mentor-location">📍 ${mentorProfile.location}</p>
+                    </div>
+                </div>
+                ` : ''}
+
+                <div class="dashboard-section">
+                    <h2 class="dashboard-section-title">📥 Booking Requests</h2>
+                    <div id="dashboard-bookings">
+                        <div class="dashboard-loading">Loading bookings...</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (!mentorId) {
+            document.getElementById('dashboard-bookings').innerHTML = `
+                <div class="dashboard-empty">
+                    <p class="dashboard-empty-icon">⚠️</p>
+                    <p class="dashboard-empty-title">Mentor profile not linked</p>
+                    <p class="dashboard-empty-text">Please log out and sign up again to link your profile.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const { data: bookings, error } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('mentor_id', mentorId)
+            .order('id', { ascending: false });
+
+        const bookingsEl = document.getElementById('dashboard-bookings');
+
+        if (error) {
+            bookingsEl.innerHTML = `<div class="dashboard-empty"><p class="dashboard-empty-text">Error loading bookings: ${error.message}</p></div>`;
+            return;
+        }
+
+        if (!bookings || bookings.length === 0) {
+            bookingsEl.innerHTML = `
+                <div class="dashboard-empty">
+                    <p class="dashboard-empty-icon">📭</p>
+                    <p class="dashboard-empty-title">No bookings yet</p>
+                    <p class="dashboard-empty-text">When learners book a session with you, requests will appear here.</p>
+                </div>
+            `;
+            return;
+        }
+
+        bookingsEl.innerHTML = `
+            <div class="bookings-table-wrap">
+                <table class="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>Learner Name</th>
+                            <th>Topic / Goal</th>
+                            <th>Preferred Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${bookings.map(b => `
+                            <tr>
+                                <td class="booking-learner">${b.name || '—'}</td>
+                                <td class="booking-topic">${b.topic || '—'}</td>
+                                <td class="booking-time">${b.preferred_time || '—'}</td>
+                                <td><span class="booking-status booking-status-${(b.status || 'pending').toLowerCase()}">${b.status || 'Pending'}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <p class="bookings-count">${bookings.length} request${bookings.length !== 1 ? 's' : ''} total</p>
+        `;
+    },
+
 };
 
 // ============================================

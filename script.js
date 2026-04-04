@@ -18,30 +18,54 @@ const mentorsData = [
     {
         id: 1,
         name: "Sheikh Ahmad Hassan",
-        bio: "Experienced Arabic teacher with 15+ years of teaching Quranic Arabic, Tajweed, and classical Arabic grammar.",
+        title: "Arabic & Tajweed Specialist",
+        location: "Cairo, Egypt",
+        bio: "Experienced Arabic teacher with 15+ years of teaching Quranic Arabic, Tajweed, and classical Arabic grammar. Trained hundreds of students worldwide.",
         topics: ["Arabic", "Tajweed", "Quran"],
-        avatar: "👳"
+        languages: ["Arabic", "English", "French"],
+        avatar: "👳",
+        sessionsCompleted: 240,
+        studentsHelped: 150,
+        yearsExperience: 15
     },
     {
         id: 2,
         name: "Ustadha Fatima Rahman",
-        bio: "Islamic studies scholar specializing in Fiqh, Islamic history, and women's issues in Islam.",
+        title: "Islamic Studies Scholar",
+        location: "London, UK",
+        bio: "PhD-level Islamic studies scholar specializing in Fiqh, Islamic history, and contemporary Islamic issues. Passionate about empowering women in Islamic learning.",
         topics: ["Fiqh", "Islamic History", "Women in Islam"],
-        avatar: "🧕"
+        languages: ["English", "Arabic", "Urdu"],
+        avatar: "🧕",
+        sessionsCompleted: 185,
+        studentsHelped: 120,
+        yearsExperience: 12
     },
     {
         id: 3,
         name: "Imam Yusuf Abdullah",
-        bio: "Community imam and counselor focused on spirituality and youth mentorship.",
+        title: "Community Imam & Counselor",
+        location: "New York, USA",
+        bio: "Community imam with expertise in spirituality, personal development, and youth mentorship. Known for creating welcoming learning environments.",
         topics: ["Aqeedah", "Spirituality", "Youth Mentorship"],
-        avatar: "🧔"
+        languages: ["English", "Arabic"],
+        avatar: "🧔",
+        sessionsCompleted: 310,
+        studentsHelped: 200,
+        yearsExperience: 18
     },
     {
         id: 4,
         name: "Dr. Amina Khalil",
-        bio: "PhD in Islamic Studies teaching Tafsir, Seerah, and comparative religion.",
+        title: "Islamic Studies Researcher",
+        location: "Istanbul, Turkey",
+        bio: "PhD in Islamic Studies with focus on Quranic exegesis and Islamic jurisprudence. Conducts research and offers comparative religion perspectives.",
         topics: ["Tafsir", "Seerah", "Comparative Religion"],
-        avatar: "👩‍🎓"
+        languages: ["English", "Turkish", "Arabic"],
+        avatar: "👩‍🎓",
+        sessionsCompleted: 156,
+        studentsHelped: 95,
+        yearsExperience: 10
     }
 ];
 
@@ -117,13 +141,29 @@ const app = {
 
                 <div class="profile-card">
 
-                    <div class="profile-header">
-                        <div class="profile-avatar">${mentor.avatar}</div>
-                        <div class="profile-info">
-                            <h2>${mentor.name}</h2>
-                            <div class="profile-topics">
-                                ${mentor.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
-                            </div>
+                    <div class="profile-header-section">
+                        <div class="profile-avatar-large">${mentor.avatar}</div>
+                        <div class="profile-header-info">
+                            <h1 class="profile-name">${mentor.name}</h1>
+                            <p class="profile-title">${mentor.title}</p>
+                            <p class="profile-location">📍 ${mentor.location}</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">${mentor.sessionsCompleted}</span>
+                            <span class="stat-label">Sessions</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">${mentor.studentsHelped}</span>
+                            <span class="stat-label">Students</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">${mentor.yearsExperience}+</span>
+                            <span class="stat-label">Years</span>
                         </div>
                     </div>
 
@@ -132,48 +172,57 @@ const app = {
                         <p>${mentor.bio}</p>
                     </div>
 
-                    <div class="profile-actions">
-                        <button class="btn btn-outline btn-large" onclick="app.showBookingForm()">Book a Session</button>
+                    <div class="profile-section">
+                        <h3>Areas of Expertise</h3>
+                        <div class="profile-topics">
+                            ${mentor.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
+                        </div>
                     </div>
 
-                    <div id="booking-section" hidden>
-                        <div class="booking-section">
-                            <h3>Request a Session</h3>
-
-                            <form id="booking-form" onsubmit="handleBookingSubmit(event)">
-
-                                <div class="form-group">
-                                    <label class="form-label" for="name">Your Name</label>
-                                    <input id="name" class="form-input" type="text" placeholder="Enter your full name" required />
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label" for="topic">What do you want to learn?</label>
-                                    <textarea id="topic" class="form-textarea" placeholder="Describe the topic or questions you'd like to explore..." required></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label" for="time">Preferred Time</label>
-                                    <input id="time" class="form-input" type="text" placeholder="e.g. Weekday evenings, Saturday mornings" required />
-                                    <span class="form-hint">Let the mentor know your general availability.</span>
-                                </div>
-
-                                <button id="submit-btn" class="btn btn-primary btn-large" type="submit">Submit Request</button>
-
-                            </form>
-
-                            <div id="error" class="booking-feedback booking-feedback-error" hidden></div>
-
-                            <div id="success" class="booking-feedback booking-feedback-success" hidden>
-                                <p class="booking-feedback-title">Request Sent!</p>
-                                <p class="booking-feedback-text">Your session request has been submitted. The mentor will be in touch with you soon.</p>
-                                <button class="btn btn-outline" onclick="app.goHome()">Back to Home</button>
-                            </div>
-
+                    <div class="profile-section">
+                        <h3>Languages</h3>
+                        <div class="profile-languages">
+                            ${mentor.languages.map(l => `<span class="language-badge">${l}</span>`).join('')}
                         </div>
                     </div>
 
                 </div>
+
+                <div class="booking-card" id="booking-card">
+                    <h2>Request a Session</h2>
+
+                    <form id="booking-form" onsubmit="handleBookingSubmit(event)">
+
+                        <div class="form-group">
+                            <label class="form-label" for="name">Your Name</label>
+                            <input id="name" class="form-input" type="text" placeholder="Enter your full name" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="topic">What would you like to learn?</label>
+                            <textarea id="topic" class="form-textarea" placeholder="Describe the topic, questions, or goals you'd like to explore..." required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="time">When are you available?</label>
+                            <input id="time" class="form-input" type="text" placeholder="e.g., Weekday evenings, Saturday mornings" required />
+                            <span class="form-hint">Share your general availability.</span>
+                        </div>
+
+                        <button id="submit-btn" class="btn btn-primary btn-large" type="submit">Send Request to ${mentor.name}</button>
+
+                    </form>
+
+                    <div id="error" class="booking-feedback booking-feedback-error" hidden></div>
+
+                    <div id="success" class="booking-feedback booking-feedback-success" hidden>
+                        <p class="booking-feedback-title">✓ Request Sent!</p>
+                        <p class="booking-feedback-text">${mentor.name} will review your request and get back to you shortly.</p>
+                        <button class="btn btn-primary" onclick="app.goHome()">Back to Mentors</button>
+                    </div>
+
+                </div>
+
             </div>
         `;
     }

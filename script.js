@@ -755,12 +755,73 @@ const mentorsData = [
 ];
 
 // ============================================
+// TRUST DATA
+// ============================================
+const REVIEWS_POOL = [
+    { name: "Aisha M.", text: "Completely transformed my recitation in just 4 sessions. I can finally read with confidence.", stars: 5 },
+    { name: "Yousef K.", text: "The most patient and knowledgeable teacher I've found. Worth every minute.", stars: 5 },
+    { name: "Sara H.", text: "Finally someone who explains things clearly without making me feel behind. Life-changing.", stars: 5 },
+    { name: "Omar R.", text: "I tried 3 other teachers before this one. Night and day difference. Highly recommend.", stars: 5 },
+    { name: "Fatima N.", text: "My Arabic went from zero to reading Quran in 8 weeks. I couldn't believe it.", stars: 5 },
+    { name: "Ibrahim J.", text: "Incredibly structured lessons. I always know what we're working toward.", stars: 5 },
+    { name: "Layla A.", text: "She answered every question without judgment. So refreshing for someone new to Islamic studies.", stars: 5 },
+    { name: "Hassan B.", text: "The Seerah sessions felt like being transported back in time. Deeply moving.", stars: 5 },
+    { name: "Mariam T.", text: "My kids look forward to every session. That alone tells you everything.", stars: 5 },
+    { name: "Bilal S.", text: "Strict but encouraging. Exactly what I needed to push through the hard parts of Hifz.", stars: 5 },
+    { name: "Zainab Q.", text: "I went from doubting my faith to feeling grounded and certain. Alhamdulillah.", stars: 5 },
+    { name: "Amira C.", text: "Practical, modern, and deeply rooted in classical scholarship. Rare combination.", stars: 5 },
+    { name: "Khalid D.", text: "Best investment I've made in my Islamic education. Genuinely life-changing.", stars: 5 },
+    { name: "Nadia P.", text: "Her warmth and depth of knowledge make every session both educational and healing.", stars: 5 },
+    { name: "Tariq L.", text: "Explained 10 years of confusion in two sessions. Wish I'd found this teacher sooner.", stars: 5 },
+    { name: "Ruqayyah F.", text: "Never felt rushed or judged. The safest space I've had to ask real questions about Islam.", stars: 5 }
+];
+
+function getMentorTrust(mentor) {
+    const id = mentor.id;
+    const ratingPool = [4.9, 5.0, 4.8, 4.9, 4.7, 5.0, 4.8, 4.9, 4.6, 4.8];
+    const rating = ratingPool[id % ratingPool.length];
+    const reviewCount = Math.max(12, Math.floor(mentor.studentsHelped * 0.6));
+    const slotsPool = [2, 3, 4, 1, 5, 3, 2, 4, 1, 3];
+    const slotsLeft = slotsPool[id % slotsPool.length];
+    const bookedPool = [8, 14, 7, 11, 9, 13, 6, 10, 12, 8];
+    const bookedThisWeek = bookedPool[id % bookedPool.length];
+    const nextPool = ["Tomorrow", "Wednesday", "Thursday", "Monday", "Friday"];
+    const nextAvailable = nextPool[id % nextPool.length];
+    const review1 = REVIEWS_POOL[id % REVIEWS_POOL.length];
+    const review2 = REVIEWS_POOL[(id + 7) % REVIEWS_POOL.length];
+
+    const badges = ["✓ Verified"];
+    const auth = mentor.authority.toLowerCase();
+    if (auth.includes("phd") || auth.includes("certified") || auth.includes("graduate") ||
+        auth.includes("hafiz") || auth.includes("ijazah") || auth.includes("author")) {
+        badges.push("🎓 Certified");
+    }
+    const nativeLanguages = ["Arabic", "Urdu", "French", "Turkish", "Malay", "Hausa", "Wolof"];
+    const firstLang = mentor.languages[0];
+    if (nativeLanguages.includes(firstLang) && firstLang !== "English") {
+        badges.push(`🗣️ Native ${firstLang}`);
+    }
+
+    return { rating, reviewCount, slotsLeft, bookedThisWeek, nextAvailable, reviews: [review1, review2], badges };
+}
+
+function renderStars(rating) {
+    const full = Math.floor(rating);
+    const half = rating % 1 >= 0.5;
+    let stars = '';
+    for (let i = 0; i < full; i++) stars += '★';
+    if (half) stars += '½';
+    return stars;
+}
+
+// ============================================
 // STATE
 // ============================================
 const state = {
     currentView: 'home',
     activeFilter: 'all',
-    searchQuery: ''
+    searchQuery: '',
+    onboardingDone: false
 };
 
 // ============================================
@@ -769,7 +830,11 @@ const state = {
 const app = {
 
     init() {
-        this.renderHome();
+        if (state.onboardingDone) {
+            this.renderHome();
+        } else {
+            this.renderOnboarding();
+        }
     },
 
     goHome() {
@@ -778,6 +843,58 @@ const app = {
         state.searchQuery = '';
         selectedMentor = null;
         this.renderHome();
+    },
+
+    completeOnboarding(filter, label) {
+        state.onboardingDone = true;
+        state.activeFilter = filter;
+        state.searchQuery = '';
+        state.currentView = 'home';
+        this.renderHome();
+    },
+
+    skipOnboarding() {
+        state.onboardingDone = true;
+        state.currentView = 'home';
+        this.renderHome();
+    },
+
+    renderOnboarding() {
+        const goals = [
+            { emoji: "📖", label: "Read the Quran", filter: "Quran" },
+            { emoji: "🔤", label: "Learn Arabic", filter: "Arabic" },
+            { emoji: "📿", label: "Quran Memorization", filter: "Memorization" },
+            { emoji: "🕌", label: "Understand Fiqh", filter: "Fiqh" },
+            { emoji: "💫", label: "Spirituality & Dhikr", filter: "Spirituality" },
+            { emoji: "👩", label: "Women's Studies", filter: "women" },
+            { emoji: "🧒", label: "For My Child", filter: "Arabic" },
+            { emoji: "🌱", label: "I'm a New Muslim", filter: "Aqeedah" },
+            { emoji: "📚", label: "Seerah & History", filter: "Seerah" },
+            { emoji: "💼", label: "Islamic Finance", filter: "Islamic Finance" }
+        ];
+
+        document.getElementById('app').innerHTML = `
+            <div class="onboarding-container">
+                <div class="onboarding-header">
+                    <p class="onboarding-step">Step 1 of 1</p>
+                    <h1 class="onboarding-title">What do you want to learn?</h1>
+                    <p class="onboarding-sub">We'll match you with the right mentor for your goal.</p>
+                </div>
+
+                <div class="onboarding-goals">
+                    ${goals.map(g => `
+                        <button class="goal-card" onclick="app.completeOnboarding('${g.filter}', '${g.label}')">
+                            <span class="goal-emoji">${g.emoji}</span>
+                            <span class="goal-label">${g.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+
+                <div class="onboarding-skip">
+                    <button class="skip-link" onclick="app.skipOnboarding()">Skip — browse all mentors →</button>
+                </div>
+            </div>
+        `;
     },
 
     viewProfile(mentorId) {
@@ -819,6 +936,7 @@ const app = {
     },
 
     renderMentorCard(mentor) {
+        const trust = getMentorTrust(mentor);
         return `
             <div class="mentor-card">
                 <div class="mentor-card-top">
@@ -829,14 +947,31 @@ const app = {
                 </div>
                 <h3 class="mentor-name">${mentor.name}</h3>
                 <p class="mentor-title-small">${mentor.title}</p>
+
+                <div class="card-rating-row">
+                    <span class="card-stars">${renderStars(trust.rating)}</span>
+                    <span class="card-rating-num">${trust.rating}</span>
+                    <span class="card-review-count">(${trust.reviewCount} reviews)</span>
+                </div>
+
+                <div class="card-trust-badges">
+                    ${trust.badges.map(b => `<span class="trust-badge">${b}</span>`).join('')}
+                </div>
+
                 <div class="mentor-card-stats">
                     <span class="mentor-stat">📚 ${mentor.sessionsCompleted} sessions</span>
                     <span class="mentor-stat-divider">·</span>
                     <span class="mentor-stat">⭐ ${mentor.yearsExperience}+ yrs</span>
                 </div>
+
+                <div class="card-urgency">
+                    🔥 ${trust.slotsLeft} slots left this week
+                </div>
+
                 <div class="mentor-topics">
                     ${mentor.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
                 </div>
+
                 <button class="btn btn-primary" onclick="app.viewProfile(${mentor.id})">
                     View Profile
                 </button>
@@ -966,6 +1101,7 @@ const app = {
     },
 
     renderProfile(mentor) {
+        const trust = getMentorTrust(mentor);
         document.getElementById('app').innerHTML = `
             <div class="profile-container">
 
@@ -979,6 +1115,17 @@ const app = {
                             <h1 class="profile-name">${mentor.name}</h1>
                             <p class="profile-title">${mentor.title}</p>
                             <p class="profile-authority">${mentor.authority}</p>
+
+                            <div class="profile-rating-row">
+                                <span class="profile-stars">${renderStars(trust.rating)}</span>
+                                <span class="profile-rating-num">${trust.rating}</span>
+                                <span class="profile-review-count">${trust.reviewCount} reviews</span>
+                            </div>
+
+                            <div class="profile-trust-badges">
+                                ${trust.badges.map(b => `<span class="trust-badge trust-badge-lg">${b}</span>`).join('')}
+                            </div>
+
                             <p class="profile-location">📍 ${mentor.location}</p>
                             <div class="availability-indicators">
                                 <span class="availability-badge">
@@ -990,6 +1137,15 @@ const app = {
                                 </span>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="profile-urgency-bar">
+                        <span class="urgency-fire">🔥</span>
+                        <span><strong>Only ${trust.slotsLeft} slots left</strong> this week</span>
+                        <span class="urgency-divider">·</span>
+                        <span>Next available: <strong>${trust.nextAvailable}</strong></span>
+                        <span class="urgency-divider">·</span>
+                        <span>Booked <strong>${trust.bookedThisWeek}×</strong> this week</span>
                     </div>
 
                     <div class="profile-stats">
@@ -1007,6 +1163,11 @@ const app = {
                             <span class="stat-number">${mentor.yearsExperience}+</span>
                             <span class="stat-label">Years</span>
                         </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">${trust.rating}</span>
+                            <span class="stat-label">Rating</span>
+                        </div>
                     </div>
 
                     <div class="profile-section">
@@ -1015,7 +1176,7 @@ const app = {
                     </div>
 
                     <div class="profile-section">
-                        <h3>What You'll Achieve</h3>
+                        <h3>What You'll Walk Away With</h3>
                         <ul class="achieve-list">
                             ${mentor.achievements.map(a => `
                                 <li class="achieve-item">
@@ -1052,9 +1213,30 @@ const app = {
                         </div>
                     </div>
 
+                    <div class="profile-section">
+                        <h3>What Students Say</h3>
+                        <div class="reviews-list">
+                            ${trust.reviews.map(r => `
+                                <div class="review-card">
+                                    <div class="review-header">
+                                        <span class="review-avatar">${r.name.charAt(0)}</span>
+                                        <div class="review-meta">
+                                            <span class="review-name">${r.name}</span>
+                                            <span class="review-stars">${'★'.repeat(r.stars)}</span>
+                                        </div>
+                                    </div>
+                                    <p class="review-text">"${r.text}"</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="booking-card" id="booking-card">
+                    <div class="booking-urgency-notice">
+                        ⏳ Only <strong>${trust.slotsLeft} spots</strong> available — next opening is <strong>${trust.nextAvailable}</strong>
+                    </div>
                     <div class="booking-card-header">
                         <h2>Request a Session</h2>
                         <p class="booking-card-sub">with ${mentor.name}</p>

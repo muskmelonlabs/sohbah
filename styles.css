@@ -324,9 +324,49 @@ body {
 }
 
 .profile-location {
-    font-size: 16px;
+    font-size: 15px;
     color: var(--text-medium);
-    margin: 0;
+    margin: 0 0 14px 0;
+}
+
+.profile-authority {
+    font-size: 14px;
+    color: var(--text-light);
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+.availability-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.availability-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--primary-green-light);
+    color: var(--primary-green-dark);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+.availability-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary-green);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
 }
 
 .profile-stats {
@@ -347,26 +387,101 @@ body {
     gap: 6px;
     flex: 1;
     text-align: center;
+    padding: 12px 8px;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s ease;
+}
+
+.stat-item:hover {
+    background-color: var(--primary-green-light);
 }
 
 .stat-number {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 800;
     color: var(--primary-green);
+    line-height: 1;
 }
 
 .stat-label {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--text-medium);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
 }
 
 .stat-divider {
     width: 1px;
     height: 40px;
     background-color: var(--border-light);
+}
+
+/* Achieve List */
+.achieve-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.achieve-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--text-medium);
+    line-height: 1.5;
+}
+
+.achieve-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    background-color: var(--primary-green);
+    color: white;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 1px;
+}
+
+/* Session Format */
+.session-format-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.format-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 14px 20px;
+    flex: 1;
+    min-width: 160px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.format-item:hover {
+    border-color: var(--primary-green);
+    box-shadow: var(--shadow-sm);
+}
+
+.format-icon {
+    font-size: 22px;
+}
+
+.format-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
 }
 
 .profile-header {
@@ -472,11 +587,21 @@ body {
     margin-top: 32px;
 }
 
+.booking-card-header {
+    margin-bottom: 28px;
+}
+
 .booking-card h2 {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 700;
     color: var(--text-dark);
-    margin-bottom: 28px;
+    margin-bottom: 4px;
+}
+
+.booking-card-sub {
+    font-size: 15px;
+    color: var(--text-medium);
+    margin: 0;
 }
 
 .booking-section {
@@ -613,12 +738,33 @@ body {
         text-align: center;
     }
 
+    .profile-header-section {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .availability-indicators {
+        justify-content: center;
+    }
+
     .profile-actions {
         flex-direction: column;
     }
 
     .profile-card {
         padding: 24px;
+    }
+
+    .booking-card {
+        padding: 24px;
+    }
+
+    .session-format-grid {
+        flex-direction: column;
+    }
+
+    .format-item {
+        min-width: unset;
     }
 }
 

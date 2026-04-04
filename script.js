@@ -19,6 +19,7 @@ const mentorsData = [
         id: 1,
         name: "Sheikh Ahmad Hassan",
         title: "Arabic & Tajweed Specialist",
+        authority: "Trained under classical scholars of Al-Azhar, Cairo",
         location: "Cairo, Egypt",
         bio: "Experienced Arabic teacher with 15+ years of teaching Quranic Arabic, Tajweed, and classical Arabic grammar. Trained hundreds of students worldwide.",
         topics: ["Arabic", "Tajweed", "Quran"],
@@ -26,12 +27,23 @@ const mentorsData = [
         avatar: "👳",
         sessionsCompleted: 240,
         studentsHelped: 150,
-        yearsExperience: 15
+        yearsExperience: 15,
+        achievements: [
+            "Improve Quran recitation with proper Tajweed",
+            "Master Arabic letters and pronunciation",
+            "Gain confidence reading the Quran independently"
+        ],
+        sessionFormat: [
+            { icon: "👤", label: "1:1 Private Session" },
+            { icon: "🌱", label: "Beginner Friendly" },
+            { icon: "⏱️", label: "30–45 Minutes" }
+        ]
     },
     {
         id: 2,
         name: "Ustadha Fatima Rahman",
         title: "Islamic Studies Scholar",
+        authority: "PhD in Islamic Law · Specializes in Fiqh and women's jurisprudence",
         location: "London, UK",
         bio: "PhD-level Islamic studies scholar specializing in Fiqh, Islamic history, and contemporary Islamic issues. Passionate about empowering women in Islamic learning.",
         topics: ["Fiqh", "Islamic History", "Women in Islam"],
@@ -39,12 +51,23 @@ const mentorsData = [
         avatar: "🧕",
         sessionsCompleted: 185,
         studentsHelped: 120,
-        yearsExperience: 12
+        yearsExperience: 12,
+        achievements: [
+            "Understand Islamic rulings with clear explanations",
+            "Learn Islamic history from primary sources",
+            "Develop a grounded Islamic worldview"
+        ],
+        sessionFormat: [
+            { icon: "👤", label: "1:1 Private Session" },
+            { icon: "🌱", label: "All Levels Welcome" },
+            { icon: "⏱️", label: "45–60 Minutes" }
+        ]
     },
     {
         id: 3,
         name: "Imam Yusuf Abdullah",
         title: "Community Imam & Counselor",
+        authority: "Serves as lead Imam · 18+ years of community guidance",
         location: "New York, USA",
         bio: "Community imam with expertise in spirituality, personal development, and youth mentorship. Known for creating welcoming learning environments.",
         topics: ["Aqeedah", "Spirituality", "Youth Mentorship"],
@@ -52,12 +75,23 @@ const mentorsData = [
         avatar: "🧔",
         sessionsCompleted: 310,
         studentsHelped: 200,
-        yearsExperience: 18
+        yearsExperience: 18,
+        achievements: [
+            "Strengthen your connection to Islam",
+            "Build a consistent daily worship routine",
+            "Develop clarity in faith and Aqeedah"
+        ],
+        sessionFormat: [
+            { icon: "👤", label: "1:1 Private Session" },
+            { icon: "🌱", label: "Beginner Friendly" },
+            { icon: "⏱️", label: "30–60 Minutes" }
+        ]
     },
     {
         id: 4,
         name: "Dr. Amina Khalil",
         title: "Islamic Studies Researcher",
+        authority: "Published researcher · Specializes in Quranic Tafsir and Seerah",
         location: "Istanbul, Turkey",
         bio: "PhD in Islamic Studies with focus on Quranic exegesis and Islamic jurisprudence. Conducts research and offers comparative religion perspectives.",
         topics: ["Tafsir", "Seerah", "Comparative Religion"],
@@ -65,7 +99,17 @@ const mentorsData = [
         avatar: "👩‍🎓",
         sessionsCompleted: 156,
         studentsHelped: 95,
-        yearsExperience: 10
+        yearsExperience: 10,
+        achievements: [
+            "Understand Quran with in-depth Tafsir",
+            "Learn the life and legacy of the Prophet ﷺ",
+            "Explore Islam's relationship with other traditions"
+        ],
+        sessionFormat: [
+            { icon: "👤", label: "1:1 Private Session" },
+            { icon: "📚", label: "Research-Based Teaching" },
+            { icon: "⏱️", label: "45–60 Minutes" }
+        ]
     }
 ];
 
@@ -146,7 +190,17 @@ const app = {
                         <div class="profile-header-info">
                             <h1 class="profile-name">${mentor.name}</h1>
                             <p class="profile-title">${mentor.title}</p>
+                            <p class="profile-authority">${mentor.authority}</p>
                             <p class="profile-location">📍 ${mentor.location}</p>
+                            <div class="availability-indicators">
+                                <span class="availability-badge">
+                                    <span class="availability-dot"></span>
+                                    Available this week
+                                </span>
+                                <span class="availability-badge">
+                                    ⚡ Responds within 24 hours
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -173,6 +227,30 @@ const app = {
                     </div>
 
                     <div class="profile-section">
+                        <h3>What You'll Achieve</h3>
+                        <ul class="achieve-list">
+                            ${mentor.achievements.map(a => `
+                                <li class="achieve-item">
+                                    <span class="achieve-check">✔</span>
+                                    <span>${a}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Session Format</h3>
+                        <div class="session-format-grid">
+                            ${mentor.sessionFormat.map(f => `
+                                <div class="format-item">
+                                    <span class="format-icon">${f.icon}</span>
+                                    <span class="format-label">${f.label}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
                         <h3>Areas of Expertise</h3>
                         <div class="profile-topics">
                             ${mentor.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
@@ -189,7 +267,10 @@ const app = {
                 </div>
 
                 <div class="booking-card" id="booking-card">
-                    <h2>Request a Session</h2>
+                    <div class="booking-card-header">
+                        <h2>Request a Session</h2>
+                        <p class="booking-card-sub">with ${mentor.name}</p>
+                    </div>
 
                     <form id="booking-form" onsubmit="handleBookingSubmit(event)">
 
@@ -206,10 +287,10 @@ const app = {
                         <div class="form-group">
                             <label class="form-label" for="time">When are you available?</label>
                             <input id="time" class="form-input" type="text" placeholder="e.g., Weekday evenings, Saturday mornings" required />
-                            <span class="form-hint">Share your general availability.</span>
+                            <span class="form-hint">Share your general availability and timezone if helpful.</span>
                         </div>
 
-                        <button id="submit-btn" class="btn btn-primary btn-large" type="submit">Send Request to ${mentor.name}</button>
+                        <button id="submit-btn" class="btn btn-primary btn-large" type="submit">Send Session Request</button>
 
                     </form>
 

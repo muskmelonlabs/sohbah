@@ -1,0 +1,155 @@
+We are upgrading Sohbah from a frontend prototype to a real Supabase-powered product.
+
+IMPORTANT: Do everything in one pass. Do not break UI. Do not remove existing functionality.
+
+----------------------------------------
+1. FIX HEADER UI ALIGNMENT
+----------------------------------------
+- Align "Mentor Login" button with other nav items (Home, About, Contact)
+- Use flexbox: align-items: center
+- Ensure consistent padding, font size, and vertical alignment
+- Match spacing with other nav links
+
+----------------------------------------
+2. REMOVE FAKE MENTOR SELECTION LOGIC
+----------------------------------------
+- Remove dropdown "Select your mentor profile"
+- DO NOT map signup to mock mentor data anymore
+- Mentor signup should create NEW data in database
+
+----------------------------------------
+3. IMPLEMENT REAL SUPABASE AUTH (MENTORS)
+----------------------------------------
+
+Use Supabase Auth:
+
+Signup:
+supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    data: {
+      full_name,
+      role: "mentor"
+    }
+  }
+})
+
+Login:
+supabase.auth.signInWithPassword()
+
+----------------------------------------
+4. CONNECT MENTORS TABLE (CRITICAL)
+----------------------------------------
+
+After signup, insert into `mentors` table:
+
+Fields:
+- id (uuid → from auth.user.id)
+- name
+- email
+- title
+- bio
+- avatar_url
+- created_at
+
+IMPORTANT:
+- Use auth.user.id as primary key
+- DO NOT generate a new id
+- Keep it linked to auth
+
+----------------------------------------
+5. BOOKING SYSTEM FIX
+----------------------------------------
+
+Ensure bookings table uses:
+
+- mentor_id (uuid)
+- must match mentors.id
+
+Update booking flow:
+- When user clicks "Book session"
+- Use selected mentor’s id (uuid)
+- Store in bookings.mentor_id
+
+----------------------------------------
+6. MENTOR DASHBOARD (REAL DATA)
+----------------------------------------
+
+Replace static dashboard:
+
+- Fetch bookings where:
+  bookings.mentor_id = currentUser.id
+
+- Display:
+  - learner name
+  - topic
+  - preferred_time
+  - created_at
+
+Empty state:
+"No bookings yet"
+
+----------------------------------------
+7. ADD LEARNER AUTH (BASIC)
+----------------------------------------
+
+Add learner signup/login using Supabase Auth
+
+Store:
+role = "learner"
+
+No separate table needed yet (keep simple)
+
+----------------------------------------
+8. REPLACE AVATARS WITH REAL IMAGES
+----------------------------------------
+
+Replace emoji avatars with real images:
+
+- Use stock images or AI-generated
+- For female mentors → modest / hijabi images
+- For male mentors → professional portraits
+
+Store image URLs in:
+mentor.avatar_url
+
+Render dynamically in UI
+
+----------------------------------------
+9. UI IMPROVEMENTS (IMPORTANT)
+----------------------------------------
+
+- Keep ADPList-style credibility layout
+- Improve spacing and hierarchy
+- Add hover states for cards
+- Ensure responsive layout
+
+----------------------------------------
+10. DO NOT BREAK EXISTING
+----------------------------------------
+
+- Supabase booking submission must still work
+- handleBookingSubmit() should remain intact
+- Navigation between pages should work
+
+----------------------------------------
+GOAL
+----------------------------------------
+
+We should have:
+
+- Real mentor signup → stored in Supabase
+- Real login → persistent session
+- Real bookings → linked to mentor
+- Real dashboard → showing bookings
+- Clean UI (aligned + credible)
+
+----------------------------------------
+OUTPUT
+----------------------------------------
+
+- Updated script.js
+- Updated styles.css
+- Any new functions clearly separated
+- Minimal explanation, focus on working code

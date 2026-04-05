@@ -6,27 +6,34 @@
 
 -- ============================================================
 -- 1. CREATE MENTORS TABLE
+--    id = auth.user.id (UUID) — linked to Supabase Auth
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.mentors (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT UNIQUE,
-    bio TEXT,
-    topics TEXT[],
-    experience INT,
-    auth_user_id UUID UNIQUE,
+    title TEXT DEFAULT '',
+    bio TEXT DEFAULT '',
+    avatar_url TEXT DEFAULT '',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================================
--- 2. ADD STATUS COLUMN TO BOOKINGS TABLE
+-- 2. ADD STATUS + MENTOR_UUID COLUMNS TO BOOKINGS TABLE
+--    mentor_uuid links to real mentor's Supabase auth user id
+--    mentor_id (int) is kept for backward compatibility
 -- ============================================================
 ALTER TABLE public.bookings
 ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
 
+ALTER TABLE public.bookings
+ADD COLUMN IF NOT EXISTS mentor_uuid UUID;
+
+ALTER TABLE public.bookings
+ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
 -- ============================================================
 -- 3. ROW LEVEL SECURITY FOR BOOKINGS
--- (Allows public insert + public read — suitable for MVP)
 -- ============================================================
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 
@@ -55,7 +62,17 @@ CREATE POLICY "mentors_select_policy"
     ON public.mentors FOR SELECT
     USING (true);
 
+DROP POLICY IF EXISTS "mentors_upsert_policy" ON public.mentors;
+CREATE POLICY "mentors_upsert_policy"
+    ON public.mentors FOR UPDATE
+    USING (true);
+
 -- ============================================================
--- DONE. Supabase Auth (email/password) is enabled by default.
--- No extra setup needed for authentication.
+-- HOW THE BOOKING FLOW WORKS
+-- ============================================================
+-- 1. Learner views a mentor profile and submits booking form
+-- 2. JS looks up the mentor by name in the mentors table
+-- 3. If found: stores their UUID in bookings.mentor_uuid
+-- 4. Mentor logs in → dashboard queries bookings WHERE mentor_uuid = auth.user.id
+-- 5. End-to-end connected when mentor has signed up on the platform
 -- ============================================================

@@ -815,6 +815,19 @@ function renderStars(rating) {
     return stars;
 }
 
+function getMentorAvatar(mentor) {
+    const femaleEmojis = ['🧕', '👩‍🎓', '👩‍⚕️'];
+    const isFemale = femaleEmojis.includes(mentor.avatar);
+    const maleMap  = { 1:32, 3:44, 5:22, 6:61, 8:34, 10:55, 12:74, 14:18, 15:45, 17:38, 19:50, 21:68, 23:71, 25:20, 27:60, 29:77, 30:40 };
+    const femaleMap = { 2:44, 4:32, 7:26, 9:63, 11:17, 13:29, 16:65, 18:47, 20:53, 22:36, 24:22, 26:68, 28:39 };
+    if (isFemale) {
+        const n = femaleMap[mentor.id] || ((mentor.id * 7) % 49 + 1);
+        return `https://randomuser.me/api/portraits/women/${n}.jpg`;
+    }
+    const n = maleMap[mentor.id] || ((mentor.id * 11) % 79 + 1);
+    return `https://randomuser.me/api/portraits/men/${n}.jpg`;
+}
+
 // ============================================
 // STATE
 // ============================================
@@ -950,7 +963,7 @@ const app = {
         return `
             <div class="mentor-card">
                 <div class="mentor-card-top">
-                    <div class="mentor-avatar">${mentor.avatar}</div>
+                    <img class="mentor-avatar-img" src="${getMentorAvatar(mentor)}" alt="${mentor.name}" loading="lazy" />
                     <span class="mentor-avail-badge">
                         <span class="mentor-avail-dot"></span> Available
                     </span>
@@ -1120,7 +1133,7 @@ const app = {
                 <div class="profile-card">
 
                     <div class="profile-header-section">
-                        <div class="profile-avatar-large">${mentor.avatar}</div>
+                        <img class="profile-avatar-img" src="${getMentorAvatar(mentor)}" alt="${mentor.name}" loading="lazy" />
                         <div class="profile-header-info">
                             <h1 class="profile-name">${mentor.name}</h1>
                             <p class="profile-title">${mentor.title}</p>
@@ -1295,48 +1308,58 @@ const app = {
         const navAuth = document.getElementById('nav-auth');
         if (!navAuth) return;
         if (currentUser) {
-            const name = currentUser.user_metadata?.name || currentUser.email;
+            const meta = currentUser.user_metadata || {};
+            const name = meta.full_name || meta.name || currentUser.email;
+            const role = meta.role || 'learner';
+            const isMentor = role === 'mentor';
             navAuth.innerHTML = `
                 <span class="nav-user-name">👤 ${name}</span>
-                <a href="#" class="nav-link nav-link-highlight" onclick="app.renderDashboard(); return false;">Dashboard</a>
+                ${isMentor ? `<a href="#" class="nav-link nav-link-highlight" onclick="app.renderDashboard(); return false;">Dashboard</a>` : ''}
                 <a href="#" class="nav-link" onclick="app.handleLogout(); return false;">Logout</a>
             `;
         } else {
             navAuth.innerHTML = `
-                <a href="#" class="nav-link nav-link-highlight" onclick="app.renderAuthPage('login'); return false;">Mentor Login</a>
+                <a href="#" class="nav-link nav-link-highlight" onclick="app.renderAuthPage('login', 'mentor'); return false;">Login</a>
             `;
         }
     },
 
-    renderAuthPage(view = 'login') {
+    renderAuthPage(view = 'login', role = 'mentor') {
         state.currentView = 'auth';
         const isLogin = view === 'login';
-        const mentorOptions = mentorsData.map(m =>
-            `<option value="${m.id}">${m.name} — ${m.title}</option>`
-        ).join('');
+        const isMentor = role === 'mentor';
 
         document.getElementById('app').innerHTML = `
             <div class="auth-container">
                 <div class="auth-card">
                     <div class="auth-logo">🌙</div>
-                    <h1 class="auth-title">${isLogin ? 'Mentor Login' : 'Create Mentor Account'}</h1>
-                    <p class="auth-sub">${isLogin ? 'Access your dashboard and manage bookings.' : 'Register to start receiving session requests.'}</p>
+                    <h1 class="auth-title">${isLogin ? 'Sign In' : 'Create Account'}</h1>
+                    <p class="auth-sub">${isLogin ? 'Welcome back. Sign in to continue.' : 'Join Sohbah and start your journey.'}</p>
 
                     <div class="auth-toggle">
-                        <button class="auth-tab ${isLogin ? 'auth-tab-active' : ''}" onclick="app.renderAuthPage('login')">Login</button>
-                        <button class="auth-tab ${!isLogin ? 'auth-tab-active' : ''}" onclick="app.renderAuthPage('signup')">Sign Up</button>
+                        <button class="auth-tab ${isLogin ? 'auth-tab-active' : ''}"
+                            onclick="app.renderAuthPage('login', '${role}')">Login</button>
+                        <button class="auth-tab ${!isLogin ? 'auth-tab-active' : ''}"
+                            onclick="app.renderAuthPage('signup', '${role}')">Sign Up</button>
                     </div>
 
-                    <form id="auth-form" onsubmit="${isLogin ? 'app.handleLogin(event)' : 'app.handleSignup(event)'}">
+                    ${!isLogin ? `
+                    <div class="role-selector">
+                        <button type="button" class="role-btn ${isMentor ? 'role-btn-active' : ''}"
+                            onclick="app.renderAuthPage('signup', 'mentor')">🎓 I'm a Mentor</button>
+                        <button type="button" class="role-btn ${!isMentor ? 'role-btn-active' : ''}"
+                            onclick="app.renderAuthPage('signup', 'learner')">📖 I'm a Learner</button>
+                    </div>
+                    ` : ''}
+
+                    <form id="auth-form" onsubmit="app.${isLogin ? 'handleLogin' : 'handleSignup'}(event, '${role}')">
 
                         ${!isLogin ? `
                         <div class="form-group">
-                            <label class="form-label" for="auth-mentor-id">Your Mentor Profile</label>
-                            <select id="auth-mentor-id" class="form-input" required>
-                                <option value="">— Select your name —</option>
-                                ${mentorOptions}
-                            </select>
-                            <span class="form-hint">Select the mentor profile that matches you on the platform.</span>
+                            <label class="form-label" for="auth-name">Full Name</label>
+                            <input id="auth-name" class="form-input" type="text"
+                                placeholder="${isMentor ? 'Your full name as it will appear on your profile' : 'Your full name'}"
+                                required />
                         </div>
                         ` : ''}
 
@@ -1347,13 +1370,15 @@ const app = {
 
                         <div class="form-group">
                             <label class="form-label" for="auth-password">Password</label>
-                            <input id="auth-password" class="form-input" type="password" placeholder="Minimum 6 characters" required minlength="6" />
+                            <input id="auth-password" class="form-input" type="password"
+                                placeholder="${isLogin ? 'Enter your password' : 'Minimum 6 characters'}"
+                                required ${!isLogin ? 'minlength="6"' : ''} />
                         </div>
 
                         <div id="auth-error" class="auth-error" hidden></div>
 
                         <button id="auth-btn" class="btn btn-primary btn-large" type="submit">
-                            ${isLogin ? 'Login to Dashboard' : 'Create Account'}
+                            ${isLogin ? 'Sign In' : (isMentor ? 'Create Mentor Account' : 'Create Learner Account')}
                         </button>
                     </form>
 
@@ -1363,42 +1388,47 @@ const app = {
         `;
     },
 
-    async handleLogin(e) {
+    async handleLogin(e, role) {
         e.preventDefault();
         const btn = document.getElementById('auth-btn');
         const errorEl = document.getElementById('auth-error');
-        const email = document.getElementById('auth-email').value;
+        const email = document.getElementById('auth-email').value.trim();
         const password = document.getElementById('auth-password').value;
 
         btn.disabled = true;
-        btn.textContent = 'Logging in...';
+        btn.textContent = 'Signing in...';
         errorEl.hidden = true;
 
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
             errorEl.textContent = error.message;
             errorEl.hidden = false;
             btn.disabled = false;
-            btn.textContent = 'Login to Dashboard';
+            btn.textContent = 'Sign In';
             return;
         }
 
-        this.renderDashboard();
+        const userRole = data.user?.user_metadata?.role || 'learner';
+        if (userRole === 'mentor') {
+            this.renderDashboard();
+        } else {
+            state.onboardingDone = true;
+            this.renderHome();
+        }
     },
 
-    async handleSignup(e) {
+    async handleSignup(e, role) {
         e.preventDefault();
         const btn = document.getElementById('auth-btn');
         const errorEl = document.getElementById('auth-error');
-        const email = document.getElementById('auth-email').value;
+        const fullName = (document.getElementById('auth-name')?.value || '').trim();
+        const email = document.getElementById('auth-email').value.trim();
         const password = document.getElementById('auth-password').value;
-        const mentorIdSelect = document.getElementById('auth-mentor-id');
-        const mentorId = parseInt(mentorIdSelect.value);
-        const mentorName = mentorIdSelect.options[mentorIdSelect.selectedIndex].text.split(' — ')[0];
+        const isMentor = role === 'mentor';
 
-        if (!mentorId) {
-            errorEl.textContent = 'Please select your mentor profile.';
+        if (!fullName) {
+            errorEl.textContent = 'Please enter your full name.';
             errorEl.hidden = false;
             return;
         }
@@ -1411,7 +1441,7 @@ const app = {
             email,
             password,
             options: {
-                data: { mentor_id: mentorId, name: mentorName }
+                data: { full_name: fullName, role }
             }
         });
 
@@ -1419,40 +1449,47 @@ const app = {
             errorEl.textContent = error.message;
             errorEl.hidden = false;
             btn.disabled = false;
-            btn.textContent = 'Create Account';
+            btn.textContent = isMentor ? 'Create Mentor Account' : 'Create Learner Account';
             return;
         }
 
         const user = data.user;
-        if (user) {
+        if (user && isMentor) {
             await supabase.from('mentors').upsert({
-                name: mentorName,
-                email,
-                auth_user_id: user.id,
-                experience: mentorsData.find(m => m.id === mentorId)?.yearsExperience || null,
-                topics: mentorsData.find(m => m.id === mentorId)?.topics || [],
-                bio: mentorsData.find(m => m.id === mentorId)?.bio || ''
+                id: user.id,
+                name: fullName,
+                email: user.email,
+                title: '',
+                bio: '',
+                avatar_url: '',
+                created_at: new Date().toISOString()
             });
         }
 
-        this.renderDashboard();
+        if (isMentor) {
+            this.renderDashboard();
+        } else {
+            state.onboardingDone = true;
+            this.renderHome();
+        }
     },
 
     async handleLogout() {
         await supabase.auth.signOut();
-        this.goHome();
+        state.onboardingDone = false;
+        this.renderOnboarding();
     },
 
     async renderDashboard() {
         if (!currentUser) {
-            this.renderAuthPage('login');
+            this.renderAuthPage('login', 'mentor');
             return;
         }
 
         state.currentView = 'dashboard';
-        const mentorId = currentUser.user_metadata?.mentor_id;
-        const mentorName = currentUser.user_metadata?.name || currentUser.email;
-        const mentorProfile = mentorsData.find(m => m.id === mentorId);
+        const meta = currentUser.user_metadata || {};
+        const mentorName = meta.full_name || meta.name || currentUser.email;
+        const mentorEmail = currentUser.email;
 
         document.getElementById('app').innerHTML = `
             <div class="dashboard-container">
@@ -1461,52 +1498,36 @@ const app = {
                         <h1 class="dashboard-title">Your Dashboard</h1>
                         <p class="dashboard-sub">Welcome back, <strong>${mentorName}</strong></p>
                     </div>
-                    ${mentorProfile ? `
-                    <button class="btn btn-outline" onclick="app.viewProfile(${mentorProfile.id})">View My Profile</button>
-                    ` : ''}
                 </div>
 
-                ${mentorProfile ? `
                 <div class="dashboard-mentor-card">
-                    <span class="dashboard-mentor-avatar">${mentorProfile.avatar}</span>
+                    <div class="dashboard-mentor-initials">${mentorName.charAt(0).toUpperCase()}</div>
                     <div>
-                        <p class="dashboard-mentor-name">${mentorProfile.name}</p>
-                        <p class="dashboard-mentor-title">${mentorProfile.title}</p>
-                        <p class="dashboard-mentor-location">📍 ${mentorProfile.location}</p>
+                        <p class="dashboard-mentor-name">${mentorName}</p>
+                        <p class="dashboard-mentor-title">Mentor</p>
+                        <p class="dashboard-mentor-location">✉️ ${mentorEmail}</p>
                     </div>
                 </div>
-                ` : ''}
 
                 <div class="dashboard-section">
                     <h2 class="dashboard-section-title">📥 Booking Requests</h2>
                     <div id="dashboard-bookings">
-                        <div class="dashboard-loading">Loading bookings...</div>
+                        <div class="dashboard-loading">Loading your bookings...</div>
                     </div>
                 </div>
             </div>
         `;
 
-        if (!mentorId) {
-            document.getElementById('dashboard-bookings').innerHTML = `
-                <div class="dashboard-empty">
-                    <p class="dashboard-empty-icon">⚠️</p>
-                    <p class="dashboard-empty-title">Mentor profile not linked</p>
-                    <p class="dashboard-empty-text">Please log out and sign up again to link your profile.</p>
-                </div>
-            `;
-            return;
-        }
-
         const { data: bookings, error } = await supabase
             .from('bookings')
             .select('*')
-            .eq('mentor_id', mentorId)
-            .order('id', { ascending: false });
+            .eq('mentor_uuid', currentUser.id)
+            .order('created_at', { ascending: false });
 
         const bookingsEl = document.getElementById('dashboard-bookings');
 
         if (error) {
-            bookingsEl.innerHTML = `<div class="dashboard-empty"><p class="dashboard-empty-text">Error loading bookings: ${error.message}</p></div>`;
+            bookingsEl.innerHTML = `<div class="dashboard-empty"><p class="dashboard-empty-text">Could not load bookings: ${error.message}</p></div>`;
             return;
         }
 
@@ -1515,7 +1536,7 @@ const app = {
                 <div class="dashboard-empty">
                     <p class="dashboard-empty-icon">📭</p>
                     <p class="dashboard-empty-title">No bookings yet</p>
-                    <p class="dashboard-empty-text">When learners book a session with you, requests will appear here.</p>
+                    <p class="dashboard-empty-text">When learners book a session with you, their requests will appear here.</p>
                 </div>
             `;
             return;
@@ -1529,18 +1550,23 @@ const app = {
                             <th>Learner Name</th>
                             <th>Topic / Goal</th>
                             <th>Preferred Time</th>
+                            <th>Received</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${bookings.map(b => `
+                        ${bookings.map(b => {
+                            const date = b.created_at ? new Date(b.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+                            const status = b.status || 'pending';
+                            return `
                             <tr>
                                 <td class="booking-learner">${b.name || '—'}</td>
                                 <td class="booking-topic">${b.topic || '—'}</td>
                                 <td class="booking-time">${b.preferred_time || '—'}</td>
-                                <td><span class="booking-status booking-status-${(b.status || 'pending').toLowerCase()}">${b.status || 'Pending'}</span></td>
-                            </tr>
-                        `).join('')}
+                                <td class="booking-time">${date}</td>
+                                <td><span class="booking-status booking-status-${status.toLowerCase()}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                            </tr>`;
+                        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -1557,28 +1583,41 @@ async function handleBookingSubmit(e) {
     e.preventDefault();
 
     const btn = document.getElementById('submit-btn');
-    const error = document.getElementById('error');
+    const errorEl = document.getElementById('error');
     const success = document.getElementById('success');
     const form = document.getElementById('booking-form');
 
     btn.disabled = true;
     btn.textContent = "Sending...";
-    error.hidden = true;
+    errorEl.hidden = true;
+
+    // Look up the mentor's real UUID if they have a Supabase account
+    let mentorUuid = null;
+    if (selectedMentor?.name) {
+        const { data: dbMentor } = await supabase
+            .from('mentors')
+            .select('id')
+            .eq('name', selectedMentor.name)
+            .maybeSingle();
+        mentorUuid = dbMentor?.id || null;
+    }
 
     const data = {
         name: document.getElementById('name').value,
         topic: document.getElementById('topic').value,
         preferred_time: document.getElementById('time').value,
-        mentor_id: selectedMentor.id
+        mentor_id: selectedMentor?.id || null,
+        mentor_uuid: mentorUuid,
+        status: 'pending'
     };
 
     const { error: err } = await supabase.from("bookings").insert([data]);
 
     if (err) {
-        error.hidden = false;
-        error.textContent = "Something went wrong. Please try again.";
+        errorEl.hidden = false;
+        errorEl.textContent = "Something went wrong. Please try again.";
         btn.disabled = false;
-        btn.textContent = "Submit Request";
+        btn.textContent = "Send Session Request";
         return;
     }
 

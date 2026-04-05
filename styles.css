@@ -1596,6 +1596,151 @@ body {
     text-align: right;
 }
 
+.booking-status-accepted {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.booking-status-rejected {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.booking-actions {
+    white-space: nowrap;
+}
+
+.action-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: opacity 0.15s ease;
+    margin-right: 4px;
+}
+
+.action-btn:hover {
+    opacity: 0.85;
+}
+
+.action-btn-accept {
+    background-color: var(--primary-green);
+    color: white;
+}
+
+.action-btn-reject {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.action-resolved {
+    color: var(--text-light);
+    font-size: 14px;
+}
+
+.booking-auth-gate {
+    text-align: center;
+    padding: 24px 0 8px;
+}
+
+.booking-auth-gate-text {
+    font-size: 15px;
+    color: var(--text-medium);
+    margin-bottom: 16px;
+}
+
+.booking-auth-gate-sub {
+    font-size: 13px;
+    color: var(--text-light);
+    margin-top: 12px;
+}
+
+.booking-auth-gate-sub a {
+    color: var(--primary-green);
+    text-decoration: none;
+}
+
+.sessions-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.session-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    transition: box-shadow 0.15s ease;
+}
+
+.session-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.session-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 16px;
+}
+
+.session-mentor-info {
+    flex: 1;
+}
+
+.session-mentor-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+}
+
+.session-topic {
+    font-size: 14px;
+    color: var(--text-medium);
+    line-height: 1.4;
+}
+
+.session-card-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.session-meta-item {
+    font-size: 13px;
+    color: var(--text-light);
+}
+
+.session-accepted-notice {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f0fdf4;
+    color: #166534;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #bbf7d0;
+}
+
+.session-rejected-notice {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fef2f2;
+    color: #991b1b;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid #fecaca;
+}
+
 @media (max-width: 768px) {
     .header .container {
         flex-direction: column;

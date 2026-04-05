@@ -19,15 +19,19 @@ CREATE TABLE IF NOT EXISTS public.mentors (
 );
 
 -- ============================================================
--- 2. ADD STATUS + MENTOR_UUID COLUMNS TO BOOKINGS TABLE
---    mentor_uuid links to real mentor's Supabase auth user id
---    mentor_id (int) is kept for backward compatibility
+-- 2. BOOKINGS TABLE — add all required columns
+--    mentor_id (int) kept for legacy; mentor_uuid is the real link
+--    learner_id (uuid) = auth.user.id of the learner who booked
+--    status: 'pending' | 'accepted' | 'rejected'
 -- ============================================================
 ALTER TABLE public.bookings
 ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
 
 ALTER TABLE public.bookings
 ADD COLUMN IF NOT EXISTS mentor_uuid UUID;
+
+ALTER TABLE public.bookings
+ADD COLUMN IF NOT EXISTS learner_id UUID;
 
 ALTER TABLE public.bookings
 ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
@@ -45,6 +49,11 @@ CREATE POLICY "bookings_insert_policy"
 DROP POLICY IF EXISTS "bookings_select_policy" ON public.bookings;
 CREATE POLICY "bookings_select_policy"
     ON public.bookings FOR SELECT
+    USING (true);
+
+DROP POLICY IF EXISTS "bookings_update_policy" ON public.bookings;
+CREATE POLICY "bookings_update_policy"
+    ON public.bookings FOR UPDATE
     USING (true);
 
 -- ============================================================
@@ -68,11 +77,14 @@ CREATE POLICY "mentors_upsert_policy"
     USING (true);
 
 -- ============================================================
--- HOW THE BOOKING FLOW WORKS
+-- HOW THE FULL BOOKING FLOW WORKS
 -- ============================================================
--- 1. Learner views a mentor profile and submits booking form
--- 2. JS looks up the mentor by name in the mentors table
--- 3. If found: stores their UUID in bookings.mentor_uuid
--- 4. Mentor logs in → dashboard queries bookings WHERE mentor_uuid = auth.user.id
--- 5. End-to-end connected when mentor has signed up on the platform
+-- 1. Learner logs in → visits a mentor profile
+-- 2. Booking form shows (no name/email needed — auth user supplies this)
+-- 3. JS resolves mentor's UUID from mentors table by name
+-- 4. Inserts: topic, preferred_time, mentor_uuid, learner_id, status='pending'
+-- 5. Mentor logs in → Dashboard queries bookings WHERE mentor_uuid = user.id
+-- 6. Mentor clicks Accept/Reject → status updated in Supabase
+-- 7. Learner logs in → My Sessions queries bookings WHERE learner_id = user.id
+-- 8. Status shows as color-coded badge: yellow=pending, green=accepted, red=rejected
 -- ============================================================

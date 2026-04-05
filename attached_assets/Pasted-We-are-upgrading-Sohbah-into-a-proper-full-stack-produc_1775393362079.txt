@@ -1,0 +1,177 @@
+We are upgrading Sohbah into a proper full-stack product with Supabase auth and structured bookings.
+
+IMPORTANT:
+- Do everything in one pass
+- Do not break existing UI
+- Keep current styling intact
+
+----------------------------------------
+1. FIX SIGNUP RATE LIMIT ISSUE (CRITICAL)
+----------------------------------------
+
+Problem:
+Signup is being triggered multiple times causing "email rate limit exceeded"
+
+Fix:
+
+- Add loading state to prevent duplicate requests
+- Disable button while request is in progress
+
+Implementation:
+
+let isLoading = false;
+
+async function handleSignup() {
+  if (isLoading) return;
+  isLoading = true;
+
+  try {
+    // existing signup logic
+  } catch (err) {
+    console.error(err);
+  } finally {
+    isLoading = false;
+  }
+}
+
+Also:
+- Disable submit button while loading
+- Add small spinner or "Creating..." text
+
+----------------------------------------
+2. CLEAN BOOKING FORM (REMOVE NAME/EMAIL)
+----------------------------------------
+
+Update booking form:
+
+REMOVE:
+- name field
+- email field
+
+KEEP ONLY:
+- topic
+- preferred_time
+
+----------------------------------------
+3. USE AUTH USER FOR BOOKINGS
+----------------------------------------
+
+When submitting booking:
+
+const { data: { user } } = await supabase.auth.getUser();
+
+const bookingData = {
+  topic,
+  preferred_time,
+  mentor_id: selectedMentor.id,
+  learner_id: user.id
+};
+
+Insert into Supabase bookings table
+
+----------------------------------------
+4. UPDATE DATABASE STRUCTURE (IMPORTANT)
+----------------------------------------
+
+Ensure bookings table has:
+
+- id (uuid)
+- topic (text)
+- preferred_time (text)
+- mentor_id (uuid)
+- learner_id (uuid)
+- status (text, default 'pending')
+- created_at (timestamp)
+
+----------------------------------------
+5. ADD BOOKING STATUS SYSTEM
+----------------------------------------
+
+Statuses:
+- pending
+- accepted
+- rejected
+
+Default:
+status = "pending"
+
+----------------------------------------
+6. MENTOR DASHBOARD IMPROVEMENT
+----------------------------------------
+
+Update mentor dashboard:
+
+Fetch bookings where:
+mentor_id = currentUser.id
+
+Display:
+
+- learner name (from auth metadata)
+- topic
+- preferred_time
+- status
+
+Add actions:
+
+[Accept] [Reject]
+
+On click:
+
+Update bookings table:
+status = "accepted" or "rejected"
+
+----------------------------------------
+7. CREATE LEARNER ACCOUNT PAGE
+----------------------------------------
+
+Add new page:
+"Account" or "My Sessions"
+
+Accessible from navbar when learner is logged in
+
+----------------------------------------
+
+Fetch bookings where:
+learner_id = currentUser.id
+
+Display:
+
+- mentor name
+- topic
+- preferred_time
+- status (very important)
+
+Status UI:
+
+pending → yellow badge
+accepted → green badge
+rejected → red badge
+
+----------------------------------------
+8. UI IMPROVEMENTS
+----------------------------------------
+
+- Add status badges (colored pills)
+- Improve spacing in dashboard cards
+- Add hover states for buttons
+- Keep ADPList-inspired clean layout
+
+----------------------------------------
+9. DO NOT BREAK EXISTING FLOW
+----------------------------------------
+
+- Supabase integration must continue working
+- Mentor profile view should remain intact
+- Booking submission should still work
+
+----------------------------------------
+GOAL
+----------------------------------------
+
+We should now have:
+
+- Auth-based booking (no manual name/email)
+- Mentor dashboard with real requests
+- Accept / Reject flow
+- Learner account page with booking status
+- No duplicate signup calls

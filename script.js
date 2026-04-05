@@ -1265,12 +1265,14 @@ const app = {
                         <p class="booking-card-sub">with ${mentor.name}</p>
                     </div>
 
+                    ${!currentUser ? `
+                    <div class="booking-auth-gate">
+                        <p class="booking-auth-gate-text">Sign in to request a session with ${mentor.name}.</p>
+                        <button class="btn btn-primary btn-large" onclick="app.renderAuthPage('login', 'learner')">Sign In to Book</button>
+                        <p class="booking-auth-gate-sub">No account? <a href="#" onclick="app.renderAuthPage('signup', 'learner'); return false;">Sign up free</a></p>
+                    </div>
+                    ` : `
                     <form id="booking-form" onsubmit="handleBookingSubmit(event)">
-
-                        <div class="form-group">
-                            <label class="form-label" for="name">Your Name</label>
-                            <input id="name" class="form-input" type="text" placeholder="Enter your full name" required />
-                        </div>
 
                         <div class="form-group">
                             <label class="form-label" for="topic">What would you like to learn?</label>
@@ -1294,6 +1296,7 @@ const app = {
                         <p class="booking-feedback-text">${mentor.name} will review your request and get back to you shortly.</p>
                         <button class="btn btn-primary" onclick="app.goHome()">Back to Mentors</button>
                     </div>
+                    `}
 
                 </div>
 
@@ -1314,7 +1317,10 @@ const app = {
             const isMentor = role === 'mentor';
             navAuth.innerHTML = `
                 <span class="nav-user-name">👤 ${name}</span>
-                ${isMentor ? `<a href="#" class="nav-link nav-link-highlight" onclick="app.renderDashboard(); return false;">Dashboard</a>` : ''}
+                ${isMentor
+                    ? `<a href="#" class="nav-link nav-link-highlight" onclick="app.renderDashboard(); return false;">Dashboard</a>`
+                    : `<a href="#" class="nav-link nav-link-highlight" onclick="app.renderMySessionsPage(); return false;">My Sessions</a>`
+                }
                 <a href="#" class="nav-link" onclick="app.handleLogout(); return false;">Logout</a>
             `;
         } else {
@@ -1420,6 +1426,8 @@ const app = {
 
     async handleSignup(e, role) {
         e.preventDefault();
+        if (this._signupInProgress) return;
+
         const btn = document.getElementById('auth-btn');
         const errorEl = document.getElementById('auth-error');
         const fullName = (document.getElementById('auth-name')?.value || '').trim();
@@ -1433,44 +1441,53 @@ const app = {
             return;
         }
 
+        this._signupInProgress = true;
         btn.disabled = true;
         btn.textContent = 'Creating account...';
         errorEl.hidden = true;
 
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { full_name: fullName, role }
-            }
-        });
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: { data: { full_name: fullName, role } }
+            });
 
-        if (error) {
-            errorEl.textContent = error.message;
+            if (error) {
+                errorEl.textContent = error.message;
+                errorEl.hidden = false;
+                btn.disabled = false;
+                btn.textContent = isMentor ? 'Create Mentor Account' : 'Create Learner Account';
+                return;
+            }
+
+            const user = data.user;
+            if (user && isMentor) {
+                await supabase.from('mentors').upsert({
+                    id: user.id,
+                    name: fullName,
+                    email: user.email,
+                    title: '',
+                    bio: '',
+                    avatar_url: '',
+                    created_at: new Date().toISOString()
+                });
+            }
+
+            if (isMentor) {
+                this.renderDashboard();
+            } else {
+                state.onboardingDone = true;
+                this.renderHome();
+            }
+        } catch (err) {
+            console.error('Signup error:', err);
+            errorEl.textContent = 'An unexpected error occurred. Please try again.';
             errorEl.hidden = false;
             btn.disabled = false;
             btn.textContent = isMentor ? 'Create Mentor Account' : 'Create Learner Account';
-            return;
-        }
-
-        const user = data.user;
-        if (user && isMentor) {
-            await supabase.from('mentors').upsert({
-                id: user.id,
-                name: fullName,
-                email: user.email,
-                title: '',
-                bio: '',
-                avatar_url: '',
-                created_at: new Date().toISOString()
-            });
-        }
-
-        if (isMentor) {
-            this.renderDashboard();
-        } else {
-            state.onboardingDone = true;
-            this.renderHome();
+        } finally {
+            this._signupInProgress = false;
         }
     },
 
@@ -1547,30 +1564,129 @@ const app = {
                 <table class="bookings-table">
                     <thead>
                         <tr>
-                            <th>Learner Name</th>
+                            <th>Learner</th>
                             <th>Topic / Goal</th>
                             <th>Preferred Time</th>
                             <th>Received</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${bookings.map(b => {
                             const date = b.created_at ? new Date(b.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
                             const status = b.status || 'pending';
+                            const isPending = status === 'pending';
                             return `
                             <tr>
-                                <td class="booking-learner">${b.name || '—'}</td>
+                                <td class="booking-learner">${b.learner_name || '—'}</td>
                                 <td class="booking-topic">${b.topic || '—'}</td>
                                 <td class="booking-time">${b.preferred_time || '—'}</td>
                                 <td class="booking-time">${date}</td>
                                 <td><span class="booking-status booking-status-${status.toLowerCase()}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                                <td class="booking-actions">
+                                    ${isPending ? `
+                                    <button class="action-btn action-btn-accept" onclick="app.updateBookingStatus('${b.id}', 'accepted')">Accept</button>
+                                    <button class="action-btn action-btn-reject" onclick="app.updateBookingStatus('${b.id}', 'rejected')">Reject</button>
+                                    ` : `<span class="action-resolved">—</span>`}
+                                </td>
                             </tr>`;
                         }).join('')}
                     </tbody>
                 </table>
             </div>
             <p class="bookings-count">${bookings.length} request${bookings.length !== 1 ? 's' : ''} total</p>
+        `;
+    },
+
+    async updateBookingStatus(bookingId, newStatus) {
+        const { error } = await supabase
+            .from('bookings')
+            .update({ status: newStatus })
+            .eq('id', bookingId);
+
+        if (error) {
+            alert('Could not update status: ' + error.message);
+            return;
+        }
+        this.renderDashboard();
+    },
+
+    async renderMySessionsPage() {
+        if (!currentUser) {
+            this.renderAuthPage('login', 'learner');
+            return;
+        }
+
+        state.currentView = 'my-sessions';
+        const meta = currentUser.user_metadata || {};
+        const learnerName = meta.full_name || meta.name || currentUser.email;
+
+        document.getElementById('app').innerHTML = `
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div>
+                        <h1 class="dashboard-title">My Sessions</h1>
+                        <p class="dashboard-sub">Track your mentorship requests, <strong>${learnerName}</strong></p>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <div id="sessions-list"><div class="dashboard-loading">Loading your sessions...</div></div>
+                </div>
+            </div>
+        `;
+        this.updateNav();
+
+        const { data: bookings, error } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('learner_id', currentUser.id)
+            .order('created_at', { ascending: false });
+
+        const sessionsEl = document.getElementById('sessions-list');
+
+        if (error) {
+            sessionsEl.innerHTML = `<div class="dashboard-empty"><p class="dashboard-empty-text">Could not load sessions: ${error.message}</p></div>`;
+            return;
+        }
+
+        if (!bookings || bookings.length === 0) {
+            sessionsEl.innerHTML = `
+                <div class="dashboard-empty">
+                    <p class="dashboard-empty-icon">📭</p>
+                    <p class="dashboard-empty-title">No sessions yet</p>
+                    <p class="dashboard-empty-text">Browse mentors and send a session request to get started.</p>
+                    <button class="btn btn-primary" onclick="app.goHome()">Browse Mentors</button>
+                </div>
+            `;
+            return;
+        }
+
+        sessionsEl.innerHTML = `
+            <div class="sessions-grid">
+                ${bookings.map(b => {
+                    const date = b.created_at ? new Date(b.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+                    const status = b.status || 'pending';
+                    return `
+                    <div class="session-card">
+                        <div class="session-card-top">
+                            <div class="session-mentor-info">
+                                <p class="session-mentor-name">${b.mentor_name || 'Mentor'}</p>
+                                <p class="session-topic">${b.topic || '—'}</p>
+                            </div>
+                            <span class="booking-status booking-status-${status.toLowerCase()}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                        </div>
+                        <div class="session-card-meta">
+                            <span class="session-meta-item">🕐 ${b.preferred_time || '—'}</span>
+                            <span class="session-meta-item">📅 ${date}</span>
+                        </div>
+                        ${status === 'accepted' ? `<div class="session-accepted-notice">✓ Your session has been accepted! Your mentor will reach out to confirm the time.</div>` : ''}
+                        ${status === 'rejected' ? `<div class="session-rejected-notice">This request wasn't accepted. Feel free to book another mentor.</div>` : ''}
+                    </div>`;
+                }).join('')}
+            </div>
+            <p class="bookings-count">${bookings.length} session${bookings.length !== 1 ? 's' : ''} total</p>
         `;
     },
 
@@ -1591,7 +1707,17 @@ async function handleBookingSubmit(e) {
     btn.textContent = "Sending...";
     errorEl.hidden = true;
 
-    // Look up the mentor's real UUID if they have a Supabase account
+    // Require auth
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        errorEl.textContent = "Please sign in to send a booking request.";
+        errorEl.hidden = false;
+        btn.disabled = false;
+        btn.textContent = "Send Session Request";
+        return;
+    }
+
+    // Look up the mentor's real UUID from the mentors table
     let mentorUuid = null;
     if (selectedMentor?.name) {
         const { data: dbMentor } = await supabase
@@ -1602,20 +1728,20 @@ async function handleBookingSubmit(e) {
         mentorUuid = dbMentor?.id || null;
     }
 
-    const data = {
-        name: document.getElementById('name').value,
+    const bookingData = {
         topic: document.getElementById('topic').value,
         preferred_time: document.getElementById('time').value,
         mentor_id: selectedMentor?.id || null,
         mentor_uuid: mentorUuid,
+        learner_id: user.id,
         status: 'pending'
     };
 
-    const { error: err } = await supabase.from("bookings").insert([data]);
+    const { error: err } = await supabase.from("bookings").insert([bookingData]);
 
     if (err) {
         errorEl.hidden = false;
-        errorEl.textContent = "Something went wrong. Please try again.";
+        errorEl.textContent = "Something went wrong: " + err.message;
         btn.disabled = false;
         btn.textContent = "Send Session Request";
         return;
